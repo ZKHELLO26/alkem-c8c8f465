@@ -128,7 +128,7 @@ function DetailsPage() {
       } catch {
         setEmpStatus("notfound");
       }
-    }, 450);
+    }, 120);
     return () => clearTimeout(t);
   }, [empCode]);
 
@@ -149,7 +149,7 @@ function DetailsPage() {
       } finally {
         setDocLoading(false);
       }
-    }, 300);
+    }, 120);
     return () => {
       if (docDebounce.current) clearTimeout(docDebounce.current);
     };
@@ -306,12 +306,12 @@ function DetailsPage() {
                   </button>
                 )}
                 {docOpen && !doc && (
-                  <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-72 overflow-y-auto rounded-xl border border-white/15 bg-[#101418] shadow-2xl">
+                  <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-72 overflow-y-auto rounded-xl border border-black/10 bg-white shadow-2xl">
                     {docLoading && (
-                      <div className="px-4 py-3 text-sm text-muted-foreground">Searching…</div>
+                      <div className="px-4 py-3 text-sm text-gray-500">Searching…</div>
                     )}
                     {!docLoading && docOptions.length === 0 && (
-                      <div className="px-4 py-3 text-sm text-muted-foreground">
+                      <div className="px-4 py-3 text-sm text-gray-500">
                         No matching doctor in your list.
                       </div>
                     )}
@@ -321,10 +321,10 @@ function DetailsPage() {
                           key={(o.doctorCode ?? o.doctorName) + i}
                           type="button"
                           onClick={() => pickDoctor(o)}
-                          className="w-full text-left px-4 py-3 hover:bg-white/10 border-b border-white/5 last:border-b-0"
+                          className="w-full text-left px-4 py-3 hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
                         >
-                          <div className="text-sm font-medium text-foreground">{o.doctorName}</div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-sm font-medium text-gray-900">{o.doctorName}</div>
+                          <div className="text-xs text-gray-600">
                             {[o.speciality, o.hq, o.subarea].filter(Boolean).join(" • ")}
                           </div>
                         </button>
