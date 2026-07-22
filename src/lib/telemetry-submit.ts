@@ -1,6 +1,7 @@
-// Client-side helper that collects everything in the scan store and posts
-// it to the submitScan server fn. Fire-and-forget; never blocks the UI.
-import { submitScan } from "./telemetry.functions";
+// Client-side helper that collects everything in the scan store and records
+// it through a narrowly scoped RPC in the connected external Supabase.
+// Fire-and-forget; never blocks the UI.
+import { supabase } from "@/integrations/supabase/client";
 import { consentTextHash } from "./consent-text";
 
 import {
@@ -69,8 +70,7 @@ export async function submitScanTelemetry(): Promise<void> {
   const signalsGzB64 = await blobToB64(signalsBlob);
 
   try {
-    await submitScan({
-      data: {
+    const payload = {
         scanId,
         userId,
         consent: {
@@ -131,8 +131,12 @@ export async function submitScanTelemetry(): Promise<void> {
           lightingScore: faceMetrics?.skinSmoothness,
         },
         signalsGzB64,
-      },
+      };
+
+    const { error } = await supabase.rpc("record_public_scan", {
+      p_payload: payload as never,
     });
+    if (error) throw error;
     // Clean up the blob refs to free memory
     clearTelemetryArtifacts();
   } catch (e) {

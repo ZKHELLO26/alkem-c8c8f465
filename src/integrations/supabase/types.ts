@@ -372,6 +372,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      record_public_scan: { Args: { p_payload: Json }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "viewer"
