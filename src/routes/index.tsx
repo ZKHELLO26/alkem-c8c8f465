@@ -1,24 +1,162 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import faceMale from "../assets/face-male.jpg";
+import faceFemale from "../assets/face-female.jpg";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  component: Landing,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function Landing() {
+  const [showFemale, setShowFemale] = useState(false);
+
+  useEffect(() => {
+    const t = setInterval(() => setShowFemale((v) => !v), 4000);
+    return () => clearInterval(t);
+  }, []);
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <main className="relative h-[100dvh] flex flex-col overflow-hidden">
+      <header className="flex items-center justify-between px-6 md:px-10 pt-4 flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-xl bg-gradient-brand glow-teal" />
+          <span className="font-semibold tracking-tight text-base">VitalScan AI</span>
+        </div>
+      </header>
+
+      <section className="flex-1 min-h-0 flex flex-col items-center justify-between px-4 py-4 text-center">
+        <div className="animate-fade-up max-w-lg flex-shrink-0">
+          <h1 className="text-3xl md:text-5xl font-bold tracking-tight leading-[1.1]">
+            Instant Health Vitals
+            <br />
+            <span className="text-gradient">from Your Face</span>
+          </h1>
+          <p className="mt-2 text-base md:text-lg text-muted-foreground font-medium">
+            Within Seconds
+          </p>
+        </div>
+
+        {/* Face + floating vitals */}
+        <div className="relative flex-1 min-h-0 w-full max-w-[min(70vh,40rem)] mx-auto my-4 animate-fade-up flex items-center justify-center">
+          {/* Soft glow */}
+          <div className="absolute inset-8 rounded-[40%] bg-gradient-brand opacity-20 blur-3xl animate-pulse-glow pointer-events-none" />
+
+          {/* Face image */}
+          <div className="relative overflow-hidden rounded-2xl" style={{ width: "55%", aspectRatio: "5/6" }}>
+            <img
+              src={faceMale}
+              alt="AI face scan demo"
+              width={640}
+              height={768}
+              className={`absolute inset-0 h-full w-full object-cover object-top transition-opacity duration-[2000ms] ${showFemale ? "opacity-0" : "opacity-100"}`}
+            />
+            <img
+              src={faceFemale}
+              alt=""
+              aria-hidden="true"
+              width={640}
+              height={768}
+              loading="lazy"
+              className={`absolute inset-0 h-full w-full object-cover object-top transition-opacity duration-[2000ms] ${showFemale ? "opacity-100" : "opacity-0"}`}
+            />
+            {/* Scan line */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <div
+                className="absolute left-0 right-0 h-[2px]"
+                style={{
+                  background: "linear-gradient(90deg, transparent 0%, oklch(0.78 0.15 180 / 0.8) 30%, oklch(0.88 0.20 155) 50%, oklch(0.78 0.15 180 / 0.8) 70%, transparent 100%)",
+                  boxShadow: "0 0 12px 4px oklch(0.78 0.15 180 / 0.4)",
+                  animation: "scanUpDown 3s ease-in-out infinite",
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Floating vitals — 3 on each side */}
+          <FloatingVitals />
+        </div>
+
+        <div className="flex-shrink-0 flex flex-col items-center gap-3">
+          <p className="text-sm md:text-base text-muted-foreground animate-fade-up">
+            Contactless Wellness Insights
+          </p>
+          <Link
+            to="/details"
+            className="group relative inline-flex items-center gap-2 rounded-full bg-gradient-brand px-10 py-4 text-base md:text-lg font-semibold tracking-wide text-primary-foreground shadow-[0_10px_40px_-10px_oklch(0.62_0.16_200/0.6)] hover:scale-[1.02] transition-transform animate-pulse-glow"
+          >
+            CONTINUE
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </Link>
+        </div>
+      </section>
+
+      <footer className="px-6 pb-3 text-center text-xs text-muted-foreground flex-shrink-0 flex items-center justify-center gap-3">
+        <span>Not a Medical Diagnosis</span>
+      </footer>
+
+    </main>
+  );
+}
+
+const VITALS = [
+  { label: "Blood Pressure", icon: "❤️" },
+  { label: "SpO₂", icon: "💧" },
+  { label: "Stress Level", icon: "🧠" },
+  { label: "Skin Age", icon: "✨" },
+  { label: "HbA1c Risk", icon: "🛡️" },
+  { label: "20+ Vitals", icon: "⚡" },
+];
+
+function FloatingVitals() {
+  const leftItems = [VITALS[0], VITALS[2], VITALS[4]];
+  const rightItems = [VITALS[1], VITALS[3], VITALS[5]];
+  return (
+    <div className="absolute inset-0 pointer-events-none">
+      {/* Left side */}
+      {leftItems.map((v, i) => (
+        <div
+          key={v.label}
+          className="absolute glass px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap flex items-center gap-1.5 shadow-lg"
+          style={{
+            top: `${12 + i * 28}%`,
+            left: "2%",
+            animation: `floatVital 3.5s ease-in-out ${i * 0.7}s infinite, fadeInVital 0.5s ease-out ${i * 0.2 + 0.2}s both`,
+          }}
+        >
+          <span>{v.icon}</span>
+          <span>{v.label}</span>
+        </div>
+      ))}
+      {/* Right side */}
+      {rightItems.map((v, i) => (
+        <div
+          key={v.label}
+          className="absolute glass px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap flex items-center gap-1.5 shadow-lg"
+          style={{
+            top: `${12 + i * 28}%`,
+            right: "2%",
+            animation: `floatVital 3.5s ease-in-out ${i * 0.7 + 0.35}s infinite, fadeInVital 0.5s ease-out ${i * 0.2 + 0.3}s both`,
+          }}
+        >
+          <span>{v.icon}</span>
+          <span>{v.label}</span>
+        </div>
+      ))}
+      <style>{`
+        @keyframes floatVital {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-8px); }
+        }
+        @keyframes fadeInVital {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes scanUpDown {
+          0% { top: 0%; }
+          50% { top: 100%; }
+          100% { top: 0%; }
+        }
+      `}</style>
     </div>
   );
 }
