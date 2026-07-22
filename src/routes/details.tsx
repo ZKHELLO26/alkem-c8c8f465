@@ -194,10 +194,9 @@ function DetailsPage() {
       return "Employee code not found. Please check the code or clear the field.";
     if (empStatus === "ok" && !doc)
       return "Please select the doctor from your list.";
-    if (d.email.trim() && !/^\S+@\S+\.\S+$/.test(d.email))
-      return "Please enter a valid email or leave it blank.";
-    if (d.mobile.trim() && (d.mobile.length < 7 || d.mobile.length > 15))
-      return "Please enter a valid mobile number or leave it blank.";
+    if (!d.name.trim()) return "Please enter your name.";
+    if (d.mobile.length !== 10)
+      return "Please enter a valid 10-digit mobile number.";
     if (!d.heightCm || !d.weightKg || !d.waistIn || !d.age)
       return "Please select your height, weight, waist and age.";
     if (d.sex !== "M" && d.sex !== "F") return "Please select your gender.";
