@@ -1,11 +1,12 @@
 // Field-force lookup server functions.
 //
-// The scan front-end never touches employees_master / doctors_master
-// directly (those tables have RLS enabled with no client policies).
-// These server fns are the only read path, and they return only the
-// minimal columns the UI needs — no mobile numbers, emails or addresses.
+// Uses the server publishable (anon) client. The two master tables have
+// narrow anon SELECT policies so the public scan form can look up an
+// employee by code and search their MCL doctor list without auth.
 import { createServerFn } from "@tanstack/react-start";
+import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import type { Database } from "@/integrations/supabase/types";
 
 export type EmployeeLookup = {
   empCode: string;
@@ -24,6 +25,24 @@ export type DoctorOption = {
   subarea: string | null;
 };
 
+function publicClient() {
+  const url = process.env.SUPABASE_URL!;
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
+  return createClient<Database>(url, key, {
+    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+    global: {
+      fetch: (input, init) => {
+        const h = new Headers(init?.headers);
+        if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) {
+          h.delete("Authorization");
+        }
+        h.set("apikey", key);
+        return fetch(input, { ...init, headers: h });
+      },
+    },
+  });
+}
+
 const CodeSchema = z.object({
   empCode: z.string().trim().min(2).max(20),
 });
@@ -31,10 +50,8 @@ const CodeSchema = z.object({
 export const lookupEmployee = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => CodeSchema.parse(input))
   .handler(async ({ data }): Promise<EmployeeLookup | null> => {
-    const { supabaseAdmin } = await import(
-      "@/integrations/supabase/client.server"
-    );
-    const { data: row, error } = await supabaseAdmin
+    const sb = publicClient();
+    const { data: row, error } = await sb
       .from("employees_master")
       .select("emp_code, emp_name, designation, hq, region, org_code")
       .eq("emp_code", data.empCode)
@@ -71,17 +88,14 @@ const DoctorSearchSchema = z.object({
 export const searchDoctors = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => DoctorSearchSchema.parse(input))
   .handler(async ({ data }): Promise<DoctorOption[]> => {
-    const { supabaseAdmin } = await import(
-      "@/integrations/supabase/client.server"
-    );
-    let q = supabaseAdmin
+    const sb = publicClient();
+    let q = sb
       .from("doctors_master")
       .select("doctor_code, doctor_name, speciality, hq, subarea")
       .eq("emp_code", data.empCode)
       .order("doctor_name", { ascending: true })
       .limit(15);
     if (data.query) {
-      // Escape PostgREST ilike wildcards in user input.
       const safe = data.query.replace(/[%_\\]/g, (m) => `\\${m}`);
       q = q.ilike("doctor_name", `%${safe}%`);
     }
