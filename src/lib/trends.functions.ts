@@ -54,7 +54,16 @@ export const getScanTrends = createServerFn({ method: "POST" })
     const mobileNorm = normMobile(data.countryCode, data.mobile);
     if (!mobileNorm) return { scans: 0, points: [] };
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return { scans: 0, points: [] };
+    }
+
+    let supabaseAdmin;
+    try {
+      ({ supabaseAdmin } = await import("@/integrations/supabase/client.server"));
+    } catch {
+      return { scans: 0, points: [] };
+    }
 
     const { data: user } = await supabaseAdmin
       .from("scan_users")
