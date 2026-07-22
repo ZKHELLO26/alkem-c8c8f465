@@ -134,7 +134,7 @@ export async function submitScanTelemetry(): Promise<void> {
       };
 
     const { error } = await supabase.rpc("record_public_scan", {
-      p_payload: payload,
+      p_payload: payload as never,
     });
     if (error) throw error;
     // Clean up the blob refs to free memory
