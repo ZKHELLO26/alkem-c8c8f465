@@ -340,26 +340,17 @@ function DetailsPage() {
             </Field>
           )}
 
-          <Field label={emp ? "Patient Name" : "Name (optional)"}>
+          <Field label={emp ? "Patient Name" : "Name"}>
             <input
               className={inputCls}
               value={d.name}
               onChange={(e) => setD({ ...d, name: e.target.value })}
               placeholder={emp ? "Patient's name" : "Your name"}
+              required
             />
           </Field>
 
-          <Field label="Email (optional)">
-            <input
-              type="email"
-              className={inputCls}
-              value={d.email}
-              onChange={(e) => setD({ ...d, email: e.target.value })}
-              placeholder="you@email.com"
-            />
-          </Field>
-
-          <Field label={emp ? "Patient Mobile (report via WhatsApp)" : "Mobile number (optional)"}>
+          <Field label={emp ? "Patient Mobile (report via WhatsApp)" : "Mobile number"}>
             <div className="flex gap-2 items-stretch">
               <div className="relative flex-shrink-0">
                 <select
@@ -381,17 +372,19 @@ function DetailsPage() {
               <input
                 type="tel"
                 inputMode="numeric"
-                maxLength={15}
+                maxLength={10}
+                required
                 className={inputCls + " flex-1 min-w-0 text-base tracking-wide"}
                 value={d.mobile}
-                onChange={(e) => setD({ ...d, mobile: e.target.value.replace(/\D/g, "") })}
-                placeholder="Enter mobile number"
+                onChange={(e) => setD({ ...d, mobile: e.target.value.replace(/\D/g, "").slice(0, 10) })}
+                placeholder="10-digit mobile number"
               />
             </div>
             <p className="mt-1.5 text-xs text-muted-foreground/80">
               Add your number to track your trends over time on future scans.
             </p>
           </Field>
+
 
           <div className="grid grid-cols-2 gap-4">
             <Field label="Height">
