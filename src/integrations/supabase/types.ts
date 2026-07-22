@@ -14,10 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      dashboard_access: {
+        Row: {
+          created_at: string
+          org_code: string | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          org_code?: string | null
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          org_code?: string | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       doctors_master: {
         Row: {
           created_at: string
-          org_code: string
           division: string | null
           doctor_code: string | null
           doctor_name: string
@@ -25,6 +45,7 @@ export type Database = {
           grade: string | null
           hq: string | null
           id: string
+          org_code: string
           qualification: string | null
           region: string | null
           speciality: string | null
@@ -32,7 +53,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          org_code?: string
           division?: string | null
           doctor_code?: string | null
           doctor_name: string
@@ -40,6 +60,7 @@ export type Database = {
           grade?: string | null
           hq?: string | null
           id?: string
+          org_code?: string
           qualification?: string | null
           region?: string | null
           speciality?: string | null
@@ -47,7 +68,6 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          org_code?: string
           division?: string | null
           doctor_code?: string | null
           doctor_name?: string
@@ -55,6 +75,7 @@ export type Database = {
           grade?: string | null
           hq?: string | null
           id?: string
+          org_code?: string
           qualification?: string | null
           region?: string | null
           speciality?: string | null
@@ -66,10 +87,10 @@ export type Database = {
         Row: {
           created_at: string
           designation: string | null
-          org_code: string
           emp_code: string
           emp_name: string
           hq: string | null
+          org_code: string
           region: string | null
           state: string | null
           zone: string | null
@@ -77,10 +98,10 @@ export type Database = {
         Insert: {
           created_at?: string
           designation?: string | null
-          org_code?: string
           emp_code: string
           emp_name: string
           hq?: string | null
+          org_code?: string
           region?: string | null
           state?: string | null
           zone?: string | null
@@ -88,10 +109,10 @@ export type Database = {
         Update: {
           created_at?: string
           designation?: string | null
-          org_code?: string
           emp_code?: string
           emp_name?: string
           hq?: string | null
+          org_code?: string
           region?: string | null
           state?: string | null
           zone?: string | null
@@ -139,16 +160,15 @@ export type Database = {
           consented_at: string | null
           consented_comms: boolean
           created_at: string
-          duration_s: number | null
           doctor_city: string | null
           doctor_code: string | null
           doctor_name: string | null
           doctor_speciality: string | null
+          duration_s: number | null
           employee_code: string | null
           employee_hq: string | null
           employee_name: string | null
           employee_region: string | null
-          scan_type: string
           expression: Json | null
           fps: number | null
           height_cm: number | null
@@ -162,6 +182,7 @@ export type Database = {
           raw_inputs: Json | null
           ref_code: string
           results: Json | null
+          scan_type: string
           sex: string | null
           signals_bytes: number | null
           signals_path: string | null
@@ -182,16 +203,15 @@ export type Database = {
           consented_at?: string | null
           consented_comms?: boolean
           created_at?: string
-          duration_s?: number | null
           doctor_city?: string | null
           doctor_code?: string | null
           doctor_name?: string | null
           doctor_speciality?: string | null
+          duration_s?: number | null
           employee_code?: string | null
           employee_hq?: string | null
           employee_name?: string | null
           employee_region?: string | null
-          scan_type?: string
           expression?: Json | null
           fps?: number | null
           height_cm?: number | null
@@ -205,6 +225,7 @@ export type Database = {
           raw_inputs?: Json | null
           ref_code: string
           results?: Json | null
+          scan_type?: string
           sex?: string | null
           signals_bytes?: number | null
           signals_path?: string | null
@@ -225,16 +246,15 @@ export type Database = {
           consented_at?: string | null
           consented_comms?: boolean
           created_at?: string
-          duration_s?: number | null
           doctor_city?: string | null
           doctor_code?: string | null
           doctor_name?: string | null
           doctor_speciality?: string | null
+          duration_s?: number | null
           employee_code?: string | null
           employee_hq?: string | null
           employee_name?: string | null
           employee_region?: string | null
-          scan_type?: string
           expression?: Json | null
           fps?: number | null
           height_cm?: number | null
@@ -248,6 +268,7 @@ export type Database = {
           raw_inputs?: Json | null
           ref_code?: string
           results?: Json | null
+          scan_type?: string
           sex?: string | null
           signals_bytes?: number | null
           signals_path?: string | null
@@ -343,10 +364,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_view_org: { Args: { p_org: string }; Returns: boolean }
       has_role: {
         Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_user: string
         }
         Returns: boolean
       }
