@@ -1,0 +1,1 @@
+write mem://index.md
