@@ -288,6 +288,13 @@ function DetailsPage() {
         </div>
 
         <form onSubmit={onStartClick} className="glass glass-strong p-6 md:p-8 space-y-5">
+          {link && (
+            <div className="rounded-xl border border-[var(--teal)]/30 bg-[var(--teal)]/10 px-4 py-3 text-sm">
+              <div className="font-semibold text-foreground">{link.orgName}</div>
+              {link.label && <div className="text-muted-foreground">{link.label}</div>}
+            </div>
+          )}
+          {show("employee", !link) && (
           <Field label="Employee Code">
             <input
               className={inputCls}
@@ -314,6 +321,7 @@ function DetailsPage() {
               </div>
             )}
           </Field>
+          )}
 
           {empStatus === "ok" && emp && (
             <Field label="Doctor">
