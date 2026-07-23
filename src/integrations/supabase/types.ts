@@ -441,6 +441,7 @@ export type Database = {
           code: string
           color: string | null
           created_at: string
+          default_url: string | null
           description: string | null
           icon: string | null
           name: string
@@ -451,6 +452,7 @@ export type Database = {
           code: string
           color?: string | null
           created_at?: string
+          default_url?: string | null
           description?: string | null
           icon?: string | null
           name: string
@@ -461,6 +463,7 @@ export type Database = {
           code?: string
           color?: string | null
           created_at?: string
+          default_url?: string | null
           description?: string | null
           icon?: string | null
           name?: string
