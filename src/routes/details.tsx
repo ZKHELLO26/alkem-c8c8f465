@@ -356,12 +356,12 @@ function DetailsPage() {
             />
           </Field>
 
-          <Field label={emp ? "Patient Mobile (report via WhatsApp)" : "Mobile number"}>
+          <Field label={emp ? "Patient WhatsApp Number" : "WhatsApp Number"}>
             <div className="flex gap-2 items-stretch">
               <div className="relative flex-shrink-0">
                 <select
                   aria-label="Country code"
-                  className={inputCls + " w-[6.5rem] pr-7 pl-3 appearance-none cursor-pointer font-medium"}
+                  className={inputCls + " w-[5rem] pr-6 pl-2 appearance-none cursor-pointer font-medium text-sm"}
                   value={d.countryCode}
                   onChange={(e) => setD({ ...d, countryCode: e.target.value })}
                 >
@@ -371,7 +371,7 @@ function DetailsPage() {
                     </option>
                   ))}
                 </select>
-                <svg className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" viewBox="0 0 12 12" fill="none">
+                <svg className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" viewBox="0 0 12 12" fill="none">
                   <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
@@ -383,13 +383,11 @@ function DetailsPage() {
                 className={inputCls + " flex-1 min-w-0 text-base tracking-wide"}
                 value={d.mobile}
                 onChange={(e) => setD({ ...d, mobile: e.target.value.replace(/\D/g, "").slice(0, 10) })}
-                placeholder="10-digit mobile number"
+                placeholder="10-digit number"
               />
             </div>
-            <p className="mt-1.5 text-xs text-muted-foreground/80">
-              Add your number to track your trends over time on future scans.
-            </p>
           </Field>
+
 
 
           <div className="grid grid-cols-2 gap-4">
