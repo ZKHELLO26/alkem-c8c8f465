@@ -97,6 +97,72 @@ function Landing() {
         <span>Not a Medical Diagnosis</span>
       </footer>
 
+      {showDisclaimer && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="disclaimer-title"
+          onClick={() => setShowDisclaimer(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-white text-gray-900 shadow-2xl max-h-[85vh] flex flex-col animate-fade-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+              <div className="h-9 w-9 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-lg font-bold">i</div>
+              <h2 id="disclaimer-title" className="text-xl font-bold">Disclaimer</h2>
+            </div>
+            <div className="px-6 pb-4 overflow-y-auto text-[15px] leading-relaxed text-gray-700 space-y-4">
+              <p>
+                This tool collects specific personal information, including your name,
+                phone number, height, weight, age and gender. This information is
+                essential for tailoring the assessment and delivering an optimal
+                experience.
+              </p>
+              <p>
+                We are committed to protecting your privacy and handle your data with
+                the utmost care. All data collected is securely stored and used solely
+                for assessment purposes, in compliance with applicable privacy laws
+                and regulations.
+              </p>
+              <p>
+                By clicking Accept, you agree with the{" "}
+                <a
+                  href="https://termsandconditions.zeikonglobal.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline hover:text-blue-800"
+                >
+                  Terms and Conditions
+                </a>{" "}
+                and{" "}
+                <a
+                  href="https://privacypolicy.zeikonglobal.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline hover:text-blue-800"
+                >
+                  Privacy Policy
+                </a>
+                .
+              </p>
+            </div>
+            <div className="px-6 pb-6 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDisclaimer(false);
+                  navigate({ to: "/details" });
+                }}
+                className="w-full rounded-full bg-gradient-brand px-6 py-3.5 text-base font-semibold text-primary-foreground hover:opacity-95 transition"
+              >
+                Accept &amp; Proceed
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
