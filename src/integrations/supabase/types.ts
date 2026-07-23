@@ -306,6 +306,98 @@ export type Database = {
         }
         Relationships: []
       }
+      parameter_visibility: {
+        Row: {
+          hidden: boolean
+          id: string
+          label: string | null
+          org_code: string | null
+          param_key: string
+          updated_at: string
+        }
+        Insert: {
+          hidden?: boolean
+          id?: string
+          label?: string | null
+          org_code?: string | null
+          param_key: string
+          updated_at?: string
+        }
+        Update: {
+          hidden?: boolean
+          id?: string
+          label?: string | null
+          org_code?: string | null
+          param_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parameter_visibility_org_code_fkey"
+            columns: ["org_code"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      scan_links: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          label: string | null
+          max_scans: number | null
+          org_code: string
+          product_code: string
+          token: string
+          used_scans: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          label?: string | null
+          max_scans?: number | null
+          org_code: string
+          product_code: string
+          token: string
+          used_scans?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          label?: string | null
+          max_scans?: number | null
+          org_code?: string
+          product_code?: string
+          token?: string
+          used_scans?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_links_org_code_fkey"
+            columns: ["org_code"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "scan_links_product_code_fkey"
+            columns: ["product_code"]
+            isOneToOne: false
+            referencedRelation: "scan_products"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       scan_parameters: {
         Row: {
           category: string | null
@@ -732,6 +824,8 @@ export type Database = {
     }
     Functions: {
       can_view_org: { Args: { p_org: string }; Returns: boolean }
+      current_org_code: { Args: never; Returns: string }
+      current_role_name: { Args: never; Returns: string }
       has_dashboard_role: { Args: { _role: string }; Returns: boolean }
       has_role: {
         Args: {
@@ -740,6 +834,9 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_member_of: { Args: { _org: string }; Returns: boolean }
+      is_org_admin_of: { Args: { _org: string }; Returns: boolean }
+      is_super_admin: { Args: never; Returns: boolean }
       record_public_scan: { Args: { p_payload: Json }; Returns: Json }
     }
     Enums: {
