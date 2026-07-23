@@ -118,14 +118,13 @@ function DetailsPage() {
         .requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 200));
     idle(() => {
       if (cancelled) return;
-      import("../lib/face-detector.client")
-        .then((m) => m.initFaceDetector())
-        .catch(() => {});
+      warmUpFaceDetector().catch(() => {});
     });
     return () => {
       cancelled = true;
     };
   }, []);
+
 
   // Debounced employee lookup once the code looks complete (>= 4 chars).
   useEffect(() => {
