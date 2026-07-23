@@ -491,10 +491,6 @@ function ResultsPage() {
           </Suspense>
         )}
 
-        <p className="mt-8 text-center text-sm text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          <span className="font-semibold text-foreground">Wellness indicator only — not a medical diagnosis.</span>{" "}
-          This AI Face Scan provides indicative insights for awareness and educational purposes only. Please consult a qualified healthcare professional for medical advice.
-        </p>
       </div>
     </main>
   );
