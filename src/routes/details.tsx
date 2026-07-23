@@ -142,10 +142,13 @@ function DetailsPage() {
     docDebounce.current = setTimeout(async () => {
       setDocLoading(true);
       try {
-        const opts = await searchDoctors({
-          data: { empCode: emp.empCode, query: docQuery.trim() },
+        const { data: opts, error } = await supabase.rpc("search_doctors_public", {
+          p_emp_code: emp.empCode,
+          p_query: docQuery.trim(),
         });
-        setDocOptions(opts);
+        if (error) throw error;
+        setDocOptions((opts ?? []) as unknown as DoctorOption[]);
+
         setDocOpen(true);
       } catch {
         setDocOptions([]);
