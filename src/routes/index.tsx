@@ -82,13 +82,14 @@ function Landing() {
           <p className="text-sm md:text-base text-muted-foreground animate-fade-up">
             Contactless Wellness Insights
           </p>
-          <Link
-            to="/details"
+          <button
+            type="button"
+            onClick={() => setShowDisclaimer(true)}
             className="group relative inline-flex items-center gap-2 rounded-full bg-gradient-brand px-10 py-4 text-base md:text-lg font-semibold tracking-wide text-primary-foreground shadow-[0_10px_40px_-10px_oklch(0.62_0.16_200/0.6)] hover:scale-[1.02] transition-transform animate-pulse-glow"
           >
             CONTINUE
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-          </Link>
+          </button>
         </div>
       </section>
 
