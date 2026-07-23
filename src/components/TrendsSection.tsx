@@ -42,7 +42,8 @@ export default function TrendsSection({
 
   useEffect(() => {
     let cancelled = false;
-    getScanTrends({ data: { countryCode, mobile } })
+    const userId = loadOrCreateUserId();
+    getScanTrends({ data: { userId, countryCode, mobile } })
       .then((res) => {
         if (!cancelled) setPoints(res.points);
       })
