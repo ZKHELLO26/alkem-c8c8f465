@@ -93,9 +93,6 @@ function Landing() {
         </div>
       </section>
 
-      <footer className="px-6 pb-3 text-center text-xs text-muted-foreground flex-shrink-0 flex items-center justify-center gap-3">
-        <span>Not a Medical Diagnosis</span>
-      </footer>
 
       {showDisclaimer && (
         <div
