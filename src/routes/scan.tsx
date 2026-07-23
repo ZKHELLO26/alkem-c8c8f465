@@ -205,6 +205,7 @@ function ScanPage() {
   // effect in the UI.
   const [displayProgress, setDisplayProgress] = useState(0);
   const [camError, setCamError] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [qIdx, setQIdx] = useState(0);
   const [answers, setAnswers] = useState<Partial<Answers>>({});
   const [analyzing, setAnalyzing] = useState(false);
