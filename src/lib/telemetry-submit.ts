@@ -108,6 +108,10 @@ export async function submitScanTelemetry(): Promise<void> {
               orgCode: details.orgCode,
             }
           : undefined,
+        link: details.linkToken
+          ? { token: details.linkToken, productCode: details.scanType }
+          : undefined,
+        scanType: details.scanType,
         lifestyle: answers as unknown as Record<string, unknown>,
         results: results as unknown as Record<string, unknown>,
         // Future-proof: capture the full input payload as-is so any new
