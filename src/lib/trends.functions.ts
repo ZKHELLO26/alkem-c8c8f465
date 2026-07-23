@@ -1,13 +1,14 @@
-// Public read-only trends lookup keyed by a phone number.
+// Trends lookup gated by an unguessable per-device user id.
 //
-// Returns a time-ordered list of past scans for the matching contact with a
-// small set of headline wellness metrics pulled from the stored results JSON.
-// No name/email/snapshot is ever returned. Same trust model as the capture
-// flow (keyed only by phone number); rows are capped and input is validated.
+// To prevent enumeration by phone number, the caller MUST supply the random
+// UUID that was assigned to their device (stored in localStorage as
+// vitalscan.userId) AND the phone number that matches the stored user row.
+// Both must match — a bare phone number is not enough.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 const InputSchema = z.object({
+  userId: z.string().uuid(),
   countryCode: z.string().max(8).optional(),
   mobile: z.string().max(32),
 });
@@ -65,9 +66,11 @@ export const getScanTrends = createServerFn({ method: "POST" })
       return { scans: 0, points: [] };
     }
 
+    // Require BOTH id and mobile to match — prevents phone-number enumeration.
     const { data: user } = await supabaseAdmin
       .from("scan_users")
       .select("id")
+      .eq("id", data.userId)
       .eq("mobile_norm", mobileNorm)
       .limit(1)
       .maybeSingle();

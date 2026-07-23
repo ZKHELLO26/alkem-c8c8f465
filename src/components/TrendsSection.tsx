@@ -9,6 +9,7 @@ import {
   YAxis,
 } from "recharts";
 import { getScanTrends, type TrendPoint } from "../lib/trends.functions";
+import { loadOrCreateUserId } from "../lib/scan-store";
 
 type MetricKey = "wellness" | "heartRate" | "bpSys" | "hrv" | "spo2" | "bmi";
 
@@ -41,7 +42,8 @@ export default function TrendsSection({
 
   useEffect(() => {
     let cancelled = false;
-    getScanTrends({ data: { countryCode, mobile } })
+    const userId = loadOrCreateUserId();
+    getScanTrends({ data: { userId, countryCode, mobile } })
       .then((res) => {
         if (!cancelled) setPoints(res.points);
       })
