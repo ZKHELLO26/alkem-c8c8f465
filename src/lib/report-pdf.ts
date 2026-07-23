@@ -297,6 +297,7 @@ export async function generateReportPdf(
   let y = bannerH + 22;
   const detailRows: [string, string][] = [];
   if (d.name) detailRows.push(["Name", d.name]);
+  if (d.doctorName) detailRows.push(["Doctor", `Dr. ${d.doctorName}`]);
   if (d.email) detailRows.push(["Email", d.email]);
   if (d.mobile) detailRows.push(["Mobile", `${d.countryCode} ${d.mobile}`]);
   if (d.age) detailRows.push(["Age", `${d.age} yrs`]);
