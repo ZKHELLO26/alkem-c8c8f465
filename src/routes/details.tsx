@@ -155,7 +155,7 @@ function DetailsPage() {
       } finally {
         setDocLoading(false);
       }
-    }, 120);
+    }, 80);
     return () => {
       if (docDebounce.current) clearTimeout(docDebounce.current);
     };
