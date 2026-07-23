@@ -85,7 +85,8 @@ function DetailsPage() {
     age: 0,
     sex: "" as "" | "M" | "F",
   });
-  const [agreed, setAgreed] = useState(false);
+  const agreed = true;
+  const setAgreed = (_: boolean) => {};
   const [err, setErr] = useState<string | null>(null);
 
 
