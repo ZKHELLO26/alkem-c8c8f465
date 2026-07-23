@@ -111,9 +111,8 @@ function DetailsPage() {
         .requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 200));
     idle(() => {
       if (cancelled) return;
-      import("@/lib/load-face-detector.client")
-        .then((m) => m.loadFaceDetector())
-        .then((d) => d.initFaceDetector())
+      import("../lib/face-detector.client")
+        .then((m) => m.initFaceDetector())
         .catch(() => {});
     });
     return () => {
