@@ -27,6 +27,9 @@ export type UserDetails = {
   doctorSpeciality?: string;
   doctorCity?: string;
   orgCode?: string;
+  // Tokenised scan-link context (set when arriving via /s/:token)
+  linkToken?: string;
+  scanType?: string;
 };
 
 
