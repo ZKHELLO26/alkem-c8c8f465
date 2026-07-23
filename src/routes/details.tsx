@@ -117,9 +117,12 @@ function DetailsPage() {
     setEmpStatus("loading");
     const t = setTimeout(async () => {
       try {
-        const found = await lookupEmployee({ data: { empCode: code } });
+        const { data: found, error } = await supabase.rpc("lookup_employee_public", {
+          p_emp_code: code,
+        });
+        if (error) throw error;
         if (found) {
-          setEmp(found);
+          setEmp(found as unknown as EmployeeLookup);
           setEmpStatus("ok");
         } else {
           setEmpStatus("notfound");
@@ -127,7 +130,8 @@ function DetailsPage() {
       } catch {
         setEmpStatus("notfound");
       }
-    }, 120);
+    }, 80);
+
     return () => clearTimeout(t);
   }, [empCode]);
 
