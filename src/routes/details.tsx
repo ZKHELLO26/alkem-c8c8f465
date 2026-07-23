@@ -1,10 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import {
-  lookupEmployee,
-  searchDoctors,
-  type DoctorOption,
-  type EmployeeLookup,
+import { supabase } from "@/integrations/supabase/client";
+import type {
+  DoctorOption,
+  EmployeeLookup,
 } from "../lib/field-lookup.functions";
 import {
   saveDetails,
@@ -16,7 +15,7 @@ import {
   clearAllScanState,
   type UserDetails,
 } from "../lib/scan-store";
-import { LegalModal, type LegalKind } from "../components/LegalModal";
+
 
 
 export const Route = createFileRoute("/details")({
@@ -87,8 +86,8 @@ function DetailsPage() {
     sex: "" as "" | "M" | "F",
   });
   const [agreed, setAgreed] = useState(false);
-  const [legalOpen, setLegalOpen] = useState<LegalKind | null>(null);
   const [err, setErr] = useState<string | null>(null);
+
 
   // ── Field-force: employee code lookup ──────────────────────────────
   const [empCode, setEmpCode] = useState("");
@@ -118,9 +117,12 @@ function DetailsPage() {
     setEmpStatus("loading");
     const t = setTimeout(async () => {
       try {
-        const found = await lookupEmployee({ data: { empCode: code } });
+        const { data: found, error } = await supabase.rpc("lookup_employee_public", {
+          p_emp_code: code,
+        });
+        if (error) throw error;
         if (found) {
-          setEmp(found);
+          setEmp(found as unknown as EmployeeLookup);
           setEmpStatus("ok");
         } else {
           setEmpStatus("notfound");
@@ -128,7 +130,8 @@ function DetailsPage() {
       } catch {
         setEmpStatus("notfound");
       }
-    }, 120);
+    }, 80);
+
     return () => clearTimeout(t);
   }, [empCode]);
 
@@ -139,17 +142,20 @@ function DetailsPage() {
     docDebounce.current = setTimeout(async () => {
       setDocLoading(true);
       try {
-        const opts = await searchDoctors({
-          data: { empCode: emp.empCode, query: docQuery.trim() },
+        const { data: opts, error } = await supabase.rpc("search_doctors_public", {
+          p_emp_code: emp.empCode,
+          p_query: docQuery.trim(),
         });
-        setDocOptions(opts);
+        if (error) throw error;
+        setDocOptions((opts ?? []) as unknown as DoctorOption[]);
+
         setDocOpen(true);
       } catch {
         setDocOptions([]);
       } finally {
         setDocLoading(false);
       }
-    }, 120);
+    }, 80);
     return () => {
       if (docDebounce.current) clearTimeout(docDebounce.current);
     };
@@ -200,7 +206,7 @@ function DetailsPage() {
     if (!d.heightCm || !d.weightKg || !d.waistIn || !d.age)
       return "Please select your height, weight, waist and age.";
     if (d.sex !== "M" && d.sex !== "F") return "Please select your gender.";
-    if (!agreed) return "Please accept the Terms of Use and Privacy Policy to continue.";
+    if (!agreed) return "Please accept the consent to continue.";
     return null;
   };
 
@@ -350,12 +356,12 @@ function DetailsPage() {
             />
           </Field>
 
-          <Field label={emp ? "Patient Mobile (report via WhatsApp)" : "Mobile number"}>
+          <Field label={emp ? "Patient WhatsApp Number" : "WhatsApp Number"}>
             <div className="flex gap-2 items-stretch">
               <div className="relative flex-shrink-0">
                 <select
                   aria-label="Country code"
-                  className={inputCls + " w-[6.5rem] pr-7 pl-3 appearance-none cursor-pointer font-medium"}
+                  className={inputCls + " w-[5rem] pr-6 pl-2 appearance-none cursor-pointer font-medium text-sm"}
                   value={d.countryCode}
                   onChange={(e) => setD({ ...d, countryCode: e.target.value })}
                 >
@@ -365,7 +371,7 @@ function DetailsPage() {
                     </option>
                   ))}
                 </select>
-                <svg className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" viewBox="0 0 12 12" fill="none">
+                <svg className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" viewBox="0 0 12 12" fill="none">
                   <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
@@ -377,13 +383,11 @@ function DetailsPage() {
                 className={inputCls + " flex-1 min-w-0 text-base tracking-wide"}
                 value={d.mobile}
                 onChange={(e) => setD({ ...d, mobile: e.target.value.replace(/\D/g, "").slice(0, 10) })}
-                placeholder="10-digit mobile number"
+                placeholder="10-digit number"
               />
             </div>
-            <p className="mt-1.5 text-xs text-muted-foreground/80">
-              Add your number to track your trends over time on future scans.
-            </p>
           </Field>
+
 
 
           <div className="grid grid-cols-2 gap-4">
@@ -468,14 +472,10 @@ function DetailsPage() {
               checked={agreed}
               onChange={(e) => setAgreed(e.target.checked)}
               className="mt-0.5 h-5 w-5 flex-shrink-0 rounded border-white/20 bg-white/10 accent-[var(--teal)] cursor-pointer"
-              aria-label="Agree to Terms of Use and Privacy Policy"
+              aria-label="I agree to the consent"
             />
             <span className="text-sm text-muted-foreground leading-relaxed">
-              I agree to the{" "}
-              <button type="button" onClick={() => setLegalOpen("terms")} className="underline text-foreground hover:text-[var(--teal)]">Terms and Conditions</button>{" "}
-              and{" "}
-              <button type="button" onClick={() => setLegalOpen("privacy")} className="underline text-foreground hover:text-[var(--teal)]">Privacy Policy</button>.
-              I understand this is a wellness tool, not a medical diagnosis.
+              I agree to the consent.
             </span>
           </label>
 
@@ -491,7 +491,7 @@ function DetailsPage() {
           </button>
         </form>
       </div>
-      {legalOpen && <LegalModal kind={legalOpen} onClose={() => setLegalOpen(null)} />}
+
     </main>
   );
 }
