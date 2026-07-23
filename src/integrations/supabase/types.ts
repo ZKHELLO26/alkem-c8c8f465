@@ -371,8 +371,25 @@ export type Database = {
       }
       scan_submissions: {
         Row: {
+          absi: number | null
           age: number | null
+          answer_exercise: string | null
+          answer_family_history: string | null
+          answer_fried_food: string | null
+          answer_sleep: string | null
           app_version: string | null
+          blood_volume: number | null
+          bmi: number | null
+          bmr: number | null
+          body_fat_pct: number | null
+          body_water_pct: number | null
+          bp_dia_high: number | null
+          bp_dia_low: number | null
+          bp_sys_high: number | null
+          bp_sys_low: number | null
+          cardiac_output: number | null
+          cardiac_workload: number | null
+          cardio_risk: string | null
           confidence: string | null
           consent_text_hash: string | null
           consent_version: string
@@ -380,44 +397,91 @@ export type Database = {
           consented_at: string | null
           consented_comms: boolean
           created_at: string
+          diabetes_risk: string | null
           doctor_city: string | null
           doctor_code: string | null
           doctor_name: string | null
           doctor_speciality: string | null
           duration_s: number | null
+          dyslipidemia_risk: string | null
           employee_code: string | null
           employee_hq: string | null
           employee_name: string | null
           employee_region: string | null
           expression: Json | null
           fps: number | null
+          heart_rate: number | null
+          heart_utilized: number | null
           height_cm: number | null
+          hr_max: number | null
+          hrr: number | null
+          hrv: number | null
+          hypertension_risk: string | null
           id: string
+          ideal_weight: number | null
           ip_country: string | null
           lifestyle: Json | null
           lighting_score: number | null
+          map_mmhg: number | null
           motion_score: number | null
+          obesity_risk: string | null
           org_code: string | null
           org_id: string | null
           over_expiry: boolean
           over_limit: boolean
+          pnn50: number | null
           raw_inputs: Json | null
           ref_code: string
+          respiration: number | null
           results: Json | null
+          rmssd: number | null
           scan_type: string
+          sdnn: number | null
           sex: string | null
           signals_bytes: number | null
           signals_path: string | null
+          skin_age: number | null
+          skin_age_confidence: string | null
           snapshot_path: string | null
           source_mode: string | null
+          spo2_high: number | null
+          spo2_low: number | null
+          stress: number | null
+          target_hr_high: number | null
+          target_hr_low: number | null
+          tdee: number | null
+          total_body_water: number | null
           user_agent: string | null
+          user_country_code: string | null
+          user_email: string | null
           user_id: string | null
+          user_mobile: string | null
+          user_name: string | null
+          vo2_max: number | null
           waist_in: number | null
           weight_kg: number | null
+          wellness_score: number | null
         }
         Insert: {
+          absi?: number | null
           age?: number | null
+          answer_exercise?: string | null
+          answer_family_history?: string | null
+          answer_fried_food?: string | null
+          answer_sleep?: string | null
           app_version?: string | null
+          blood_volume?: number | null
+          bmi?: number | null
+          bmr?: number | null
+          body_fat_pct?: number | null
+          body_water_pct?: number | null
+          bp_dia_high?: number | null
+          bp_dia_low?: number | null
+          bp_sys_high?: number | null
+          bp_sys_low?: number | null
+          cardiac_output?: number | null
+          cardiac_workload?: number | null
+          cardio_risk?: string | null
           confidence?: string | null
           consent_text_hash?: string | null
           consent_version: string
@@ -425,44 +489,91 @@ export type Database = {
           consented_at?: string | null
           consented_comms?: boolean
           created_at?: string
+          diabetes_risk?: string | null
           doctor_city?: string | null
           doctor_code?: string | null
           doctor_name?: string | null
           doctor_speciality?: string | null
           duration_s?: number | null
+          dyslipidemia_risk?: string | null
           employee_code?: string | null
           employee_hq?: string | null
           employee_name?: string | null
           employee_region?: string | null
           expression?: Json | null
           fps?: number | null
+          heart_rate?: number | null
+          heart_utilized?: number | null
           height_cm?: number | null
+          hr_max?: number | null
+          hrr?: number | null
+          hrv?: number | null
+          hypertension_risk?: string | null
           id?: string
+          ideal_weight?: number | null
           ip_country?: string | null
           lifestyle?: Json | null
           lighting_score?: number | null
+          map_mmhg?: number | null
           motion_score?: number | null
+          obesity_risk?: string | null
           org_code?: string | null
           org_id?: string | null
           over_expiry?: boolean
           over_limit?: boolean
+          pnn50?: number | null
           raw_inputs?: Json | null
           ref_code: string
+          respiration?: number | null
           results?: Json | null
+          rmssd?: number | null
           scan_type?: string
+          sdnn?: number | null
           sex?: string | null
           signals_bytes?: number | null
           signals_path?: string | null
+          skin_age?: number | null
+          skin_age_confidence?: string | null
           snapshot_path?: string | null
           source_mode?: string | null
+          spo2_high?: number | null
+          spo2_low?: number | null
+          stress?: number | null
+          target_hr_high?: number | null
+          target_hr_low?: number | null
+          tdee?: number | null
+          total_body_water?: number | null
           user_agent?: string | null
+          user_country_code?: string | null
+          user_email?: string | null
           user_id?: string | null
+          user_mobile?: string | null
+          user_name?: string | null
+          vo2_max?: number | null
           waist_in?: number | null
           weight_kg?: number | null
+          wellness_score?: number | null
         }
         Update: {
+          absi?: number | null
           age?: number | null
+          answer_exercise?: string | null
+          answer_family_history?: string | null
+          answer_fried_food?: string | null
+          answer_sleep?: string | null
           app_version?: string | null
+          blood_volume?: number | null
+          bmi?: number | null
+          bmr?: number | null
+          body_fat_pct?: number | null
+          body_water_pct?: number | null
+          bp_dia_high?: number | null
+          bp_dia_low?: number | null
+          bp_sys_high?: number | null
+          bp_sys_low?: number | null
+          cardiac_output?: number | null
+          cardiac_workload?: number | null
+          cardio_risk?: string | null
           confidence?: string | null
           consent_text_hash?: string | null
           consent_version?: string
@@ -470,40 +581,70 @@ export type Database = {
           consented_at?: string | null
           consented_comms?: boolean
           created_at?: string
+          diabetes_risk?: string | null
           doctor_city?: string | null
           doctor_code?: string | null
           doctor_name?: string | null
           doctor_speciality?: string | null
           duration_s?: number | null
+          dyslipidemia_risk?: string | null
           employee_code?: string | null
           employee_hq?: string | null
           employee_name?: string | null
           employee_region?: string | null
           expression?: Json | null
           fps?: number | null
+          heart_rate?: number | null
+          heart_utilized?: number | null
           height_cm?: number | null
+          hr_max?: number | null
+          hrr?: number | null
+          hrv?: number | null
+          hypertension_risk?: string | null
           id?: string
+          ideal_weight?: number | null
           ip_country?: string | null
           lifestyle?: Json | null
           lighting_score?: number | null
+          map_mmhg?: number | null
           motion_score?: number | null
+          obesity_risk?: string | null
           org_code?: string | null
           org_id?: string | null
           over_expiry?: boolean
           over_limit?: boolean
+          pnn50?: number | null
           raw_inputs?: Json | null
           ref_code?: string
+          respiration?: number | null
           results?: Json | null
+          rmssd?: number | null
           scan_type?: string
+          sdnn?: number | null
           sex?: string | null
           signals_bytes?: number | null
           signals_path?: string | null
+          skin_age?: number | null
+          skin_age_confidence?: string | null
           snapshot_path?: string | null
           source_mode?: string | null
+          spo2_high?: number | null
+          spo2_low?: number | null
+          stress?: number | null
+          target_hr_high?: number | null
+          target_hr_low?: number | null
+          tdee?: number | null
+          total_body_water?: number | null
           user_agent?: string | null
+          user_country_code?: string | null
+          user_email?: string | null
           user_id?: string | null
+          user_mobile?: string | null
+          user_name?: string | null
+          vo2_max?: number | null
           waist_in?: number | null
           weight_kg?: number | null
+          wellness_score?: number | null
         }
         Relationships: [
           {
