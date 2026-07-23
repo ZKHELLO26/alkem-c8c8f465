@@ -474,14 +474,10 @@ function DetailsPage() {
               checked={agreed}
               onChange={(e) => setAgreed(e.target.checked)}
               className="mt-0.5 h-5 w-5 flex-shrink-0 rounded border-white/20 bg-white/10 accent-[var(--teal)] cursor-pointer"
-              aria-label="Agree to Terms of Use and Privacy Policy"
+              aria-label="I agree to the consent"
             />
             <span className="text-sm text-muted-foreground leading-relaxed">
-              I agree to the{" "}
-              <button type="button" onClick={() => setLegalOpen("terms")} className="underline text-foreground hover:text-[var(--teal)]">Terms and Conditions</button>{" "}
-              and{" "}
-              <button type="button" onClick={() => setLegalOpen("privacy")} className="underline text-foreground hover:text-[var(--teal)]">Privacy Policy</button>.
-              I understand this is a wellness tool, not a medical diagnosis.
+              I agree to the consent.
             </span>
           </label>
 
@@ -497,7 +493,7 @@ function DetailsPage() {
           </button>
         </form>
       </div>
-      {legalOpen && <LegalModal kind={legalOpen} onClose={() => setLegalOpen(null)} />}
+
     </main>
   );
 }
