@@ -837,7 +837,12 @@ export type Database = {
       is_member_of: { Args: { _org: string }; Returns: boolean }
       is_org_admin_of: { Args: { _org: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
+      lookup_employee_public: { Args: { p_emp_code: string }; Returns: Json }
       record_public_scan: { Args: { p_payload: Json }; Returns: Json }
+      search_doctors_public: {
+        Args: { p_emp_code: string; p_query?: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "viewer"
