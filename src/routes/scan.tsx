@@ -205,6 +205,7 @@ function ScanPage() {
   // effect in the UI.
   const [displayProgress, setDisplayProgress] = useState(0);
   const [camError, setCamError] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [qIdx, setQIdx] = useState(0);
   const [answers, setAnswers] = useState<Partial<Answers>>({});
   const [analyzing, setAnalyzing] = useState(false);
@@ -314,6 +315,7 @@ function ScanPage() {
   // Camera
   useEffect(() => {
     let stream: MediaStream | null = null;
+    let cancelled = false;
     (async () => {
       try {
         if (!navigator.mediaDevices?.getUserMedia) {
@@ -322,12 +324,16 @@ function ScanPage() {
         }
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
-            facingMode: "user",
+            facingMode: { ideal: facingMode },
             width: { ideal: 640 },
             height: { ideal: 480 },
           },
           audio: false,
         });
+        if (cancelled) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play().catch(() => {});
@@ -339,9 +345,10 @@ function ScanPage() {
       }
     })();
     return () => {
+      cancelled = true;
       stream?.getTracks().forEach((t) => t.stop());
     };
-  }, []);
+  }, [facingMode]);
 
   // rPPG signal quality check
   const checkRppgQuality = useCallback(
@@ -1149,12 +1156,25 @@ function ScanPage() {
                   ref={videoRef}
                   playsInline
                   muted
-                  className="h-full w-full object-cover scale-x-[-1]"
+                  className={`h-full w-full object-cover transition-transform duration-300 ${facingMode === "user" ? "scale-x-[-1]" : ""}`}
                 />
                 <canvas
                   ref={meshCanvasRef}
-                  className="absolute inset-0 h-full w-full object-cover scale-x-[-1] pointer-events-none mix-blend-screen"
+                  className={`absolute inset-0 h-full w-full object-cover pointer-events-none mix-blend-screen transition-transform duration-300 ${facingMode === "user" ? "scale-x-[-1]" : ""}`}
                 />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFacingMode((m) => (m === "user" ? "environment" : "user"))
+                  }
+                  aria-label="Switch camera"
+                  className="absolute top-3 right-3 z-10 h-10 w-10 rounded-full bg-black/55 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/70 active:scale-95 transition"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+                    <path d="M20 8h-3l-2-2H9L7 8H4a1 1 0 00-1 1v10a1 1 0 001 1h16a1 1 0 001-1V9a1 1 0 00-1-1z" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M9 14a3 3 0 003 3m3-3a3 3 0 01-3 3m0-6l2-2m-2 2l-2-2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
               </div>
 
               {/* Intro prompts */}
