@@ -9,6 +9,7 @@ import {
   YAxis,
 } from "recharts";
 import { getScanTrends, type TrendPoint } from "../lib/trends.functions";
+import { loadOrCreateUserId } from "../lib/scan-store";
 
 type MetricKey = "wellness" | "heartRate" | "bpSys" | "hrv" | "spo2" | "bmi";
 
