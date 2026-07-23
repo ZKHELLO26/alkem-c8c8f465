@@ -51,33 +51,15 @@ export const lookupEmployee = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => CodeSchema.parse(input))
   .handler(async ({ data }): Promise<EmployeeLookup | null> => {
     const sb = publicClient();
-    const { data: row, error } = await sb
-      .from("employees_master")
-      .select("emp_code, emp_name, designation, hq, region, org_code")
-      .eq("emp_code", data.empCode)
-      .limit(1)
-      .maybeSingle();
+    const { data: row, error } = await sb.rpc("lookup_employee_public", {
+      p_emp_code: data.empCode,
+    });
     if (error) {
       console.error("lookupEmployee failed:", error);
       return null;
     }
     if (!row) return null;
-    const r = row as {
-      emp_code: string;
-      emp_name: string;
-      designation: string | null;
-      hq: string | null;
-      region: string | null;
-      org_code: string | null;
-    };
-    return {
-      empCode: r.emp_code,
-      empName: r.emp_name,
-      designation: r.designation,
-      hq: r.hq,
-      region: r.region,
-      orgCode: r.org_code,
-    };
+    return row as EmployeeLookup;
   });
 
 const DoctorSearchSchema = z.object({
@@ -89,32 +71,14 @@ export const searchDoctors = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => DoctorSearchSchema.parse(input))
   .handler(async ({ data }): Promise<DoctorOption[]> => {
     const sb = publicClient();
-    let q = sb
-      .from("doctors_master")
-      .select("doctor_code, doctor_name, speciality, hq, subarea")
-      .eq("emp_code", data.empCode)
-      .order("doctor_name", { ascending: true })
-      .limit(15);
-    if (data.query) {
-      const safe = data.query.replace(/[%_\\]/g, (m) => `\\${m}`);
-      q = q.ilike("doctor_name", `%${safe}%`);
-    }
-    const { data: rows, error } = await q;
+    const { data: rows, error } = await sb.rpc("search_doctors_public", {
+      p_emp_code: data.empCode,
+      p_query: data.query ?? "",
+    });
     if (error) {
       console.error("searchDoctors failed:", error);
       return [];
     }
-    return ((rows ?? []) as Array<{
-      doctor_code: string | null;
-      doctor_name: string;
-      speciality: string | null;
-      hq: string | null;
-      subarea: string | null;
-    }>).map((r) => ({
-      doctorCode: r.doctor_code,
-      doctorName: r.doctor_name,
-      speciality: r.speciality,
-      hq: r.hq,
-      subarea: r.subarea,
-    }));
+    return (rows ?? []) as DoctorOption[];
   });
+
