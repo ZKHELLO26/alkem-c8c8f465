@@ -315,6 +315,7 @@ function ScanPage() {
   // Camera
   useEffect(() => {
     let stream: MediaStream | null = null;
+    let cancelled = false;
     (async () => {
       try {
         if (!navigator.mediaDevices?.getUserMedia) {
@@ -323,12 +324,16 @@ function ScanPage() {
         }
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
-            facingMode: "user",
+            facingMode: { ideal: facingMode },
             width: { ideal: 640 },
             height: { ideal: 480 },
           },
           audio: false,
         });
+        if (cancelled) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play().catch(() => {});
@@ -340,9 +345,10 @@ function ScanPage() {
       }
     })();
     return () => {
+      cancelled = true;
       stream?.getTracks().forEach((t) => t.stop());
     };
-  }, []);
+  }, [facingMode]);
 
   // rPPG signal quality check
   const checkRppgQuality = useCallback(
