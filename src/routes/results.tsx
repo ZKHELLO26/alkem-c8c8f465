@@ -329,6 +329,11 @@ function ResultsPage() {
         {/* Wellness Score */}
         <div className="text-center animate-fade-up">
           <div className="text-sm uppercase tracking-wider text-muted-foreground font-medium">Your Wellness Report</div>
+          {details?.doctorName && (
+            <div className="mt-1 text-sm text-muted-foreground">
+              Dr. {details.doctorName}
+            </div>
+          )}
           <div className="mt-8 flex justify-center">
             <ScoreRing score={results.wellnessScore} />
           </div>
