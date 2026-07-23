@@ -9,6 +9,8 @@ export const Route = createFileRoute("/")({
 
 function Landing() {
   const [showFemale, setShowFemale] = useState(false);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const t = setInterval(() => setShowFemale((v) => !v), 4000);
