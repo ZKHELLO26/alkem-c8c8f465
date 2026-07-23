@@ -16,6 +16,7 @@ import {
   clearAllScanState,
   type UserDetails,
 } from "../lib/scan-store";
+import { loadLinkConfig, type ScanLinkConfig } from "../lib/scan-link";
 
 
 
@@ -93,6 +94,10 @@ function DetailsPage() {
     sex: "" as "" | "M" | "F",
   });
   const [err, setErr] = useState<string | null>(null);
+  // Tokenised link config (set when the person arrived via /s/:token)
+  const [link] = useState<ScanLinkConfig | null>(() => loadLinkConfig());
+  const show = (key: string, def: boolean) =>
+    link ? (link.fields?.[key] ?? def) : def;
 
 
   // ── Field-force: employee code lookup ──────────────────────────────
@@ -263,7 +268,9 @@ function DetailsPage() {
       doctorName: doc?.doctorName || undefined,
       doctorSpeciality: doc?.speciality || undefined,
       doctorCity: doc?.hq || doc?.subarea || undefined,
-      orgCode: emp?.orgCode || undefined,
+      orgCode: link?.orgCode || emp?.orgCode || undefined,
+      linkToken: link?.token || undefined,
+      scanType: link?.productCode || undefined,
     } as UserDetails);
     navigate({ to: "/scan" });
   };
