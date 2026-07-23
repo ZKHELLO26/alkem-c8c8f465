@@ -86,8 +86,8 @@ function DetailsPage() {
     sex: "" as "" | "M" | "F",
   });
   const [agreed, setAgreed] = useState(false);
-  const [legalOpen, setLegalOpen] = useState<LegalKind | null>(null);
   const [err, setErr] = useState<string | null>(null);
+
 
   // ── Field-force: employee code lookup ──────────────────────────────
   const [empCode, setEmpCode] = useState("");
