@@ -206,7 +206,7 @@ function DetailsPage() {
     if (!d.heightCm || !d.weightKg || !d.waistIn || !d.age)
       return "Please select your height, weight, waist and age.";
     if (d.sex !== "M" && d.sex !== "F") return "Please select your gender.";
-    if (!agreed) return "Please accept the Terms of Use and Privacy Policy to continue.";
+    if (!agreed) return "Please accept the consent to continue.";
     return null;
   };
 
