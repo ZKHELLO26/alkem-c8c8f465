@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import faceMale from "../assets/face-male.jpg";
 import faceFemale from "../assets/face-female.jpg";
@@ -9,6 +9,8 @@ export const Route = createFileRoute("/")({
 
 function Landing() {
   const [showFemale, setShowFemale] = useState(false);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const t = setInterval(() => setShowFemale((v) => !v), 4000);
@@ -80,13 +82,14 @@ function Landing() {
           <p className="text-sm md:text-base text-muted-foreground animate-fade-up">
             Contactless Wellness Insights
           </p>
-          <Link
-            to="/details"
+          <button
+            type="button"
+            onClick={() => setShowDisclaimer(true)}
             className="group relative inline-flex items-center gap-2 rounded-full bg-gradient-brand px-10 py-4 text-base md:text-lg font-semibold tracking-wide text-primary-foreground shadow-[0_10px_40px_-10px_oklch(0.62_0.16_200/0.6)] hover:scale-[1.02] transition-transform animate-pulse-glow"
           >
             CONTINUE
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-          </Link>
+          </button>
         </div>
       </section>
 
@@ -94,6 +97,72 @@ function Landing() {
         <span>Not a Medical Diagnosis</span>
       </footer>
 
+      {showDisclaimer && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="disclaimer-title"
+          onClick={() => setShowDisclaimer(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-white text-gray-900 shadow-2xl max-h-[85vh] flex flex-col animate-fade-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+              <div className="h-9 w-9 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-lg font-bold">i</div>
+              <h2 id="disclaimer-title" className="text-xl font-bold">Disclaimer</h2>
+            </div>
+            <div className="px-6 pb-4 overflow-y-auto text-[15px] leading-relaxed text-gray-700 space-y-4">
+              <p>
+                This tool collects specific personal information, including your name,
+                phone number, height, weight, age and gender. This information is
+                essential for tailoring the assessment and delivering an optimal
+                experience.
+              </p>
+              <p>
+                We are committed to protecting your privacy and handle your data with
+                the utmost care. All data collected is securely stored and used solely
+                for assessment purposes, in compliance with applicable privacy laws
+                and regulations.
+              </p>
+              <p>
+                By clicking Accept, you agree with the{" "}
+                <a
+                  href="https://termsandconditions.zeikonglobal.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline hover:text-blue-800"
+                >
+                  Terms and Conditions
+                </a>{" "}
+                and{" "}
+                <a
+                  href="https://privacypolicy.zeikonglobal.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline hover:text-blue-800"
+                >
+                  Privacy Policy
+                </a>
+                .
+              </p>
+            </div>
+            <div className="px-6 pb-6 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDisclaimer(false);
+                  navigate({ to: "/details" });
+                }}
+                className="w-full rounded-full bg-gradient-brand px-6 py-3.5 text-base font-semibold text-primary-foreground hover:opacity-95 transition"
+              >
+                Accept &amp; Proceed
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
