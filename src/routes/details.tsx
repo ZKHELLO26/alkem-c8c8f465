@@ -1,10 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import {
-  lookupEmployee,
-  searchDoctors,
-  type DoctorOption,
-  type EmployeeLookup,
+import { supabase } from "@/integrations/supabase/client";
+import type {
+  DoctorOption,
+  EmployeeLookup,
 } from "../lib/field-lookup.functions";
 import {
   saveDetails,
@@ -16,7 +15,7 @@ import {
   clearAllScanState,
   type UserDetails,
 } from "../lib/scan-store";
-import { LegalModal, type LegalKind } from "../components/LegalModal";
+
 
 
 export const Route = createFileRoute("/details")({
