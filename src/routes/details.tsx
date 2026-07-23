@@ -102,6 +102,25 @@ function DetailsPage() {
   const docBoxRef = useRef<HTMLDivElement | null>(null);
   const docDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Warm up the MediaPipe face detector while the user fills the form,
+  // so the scan page starts instantly instead of waiting on a cold load.
+  useEffect(() => {
+    let cancelled = false;
+    const idle =
+      (window as unknown as { requestIdleCallback?: (cb: () => void) => number })
+        .requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 200));
+    idle(() => {
+      if (cancelled) return;
+      import("@/lib/load-face-detector.client")
+        .then((m) => m.loadFaceDetector())
+        .then((d) => d.initFaceDetector())
+        .catch(() => {});
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Debounced employee lookup once the code looks complete (>= 4 chars).
   useEffect(() => {
     const code = empCode.trim();
