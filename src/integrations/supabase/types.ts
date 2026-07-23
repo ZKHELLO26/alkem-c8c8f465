@@ -17,18 +17,21 @@ export type Database = {
       dashboard_access: {
         Row: {
           created_at: string
+          email: string | null
           org_code: string | null
           role: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          email?: string | null
           org_code?: string | null
           role: string
           user_id: string
         }
         Update: {
           created_at?: string
+          email?: string | null
           org_code?: string | null
           role?: string
           user_id?: string
@@ -347,6 +350,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           expires_at: string | null
+          fields: Json | null
           id: string
           label: string | null
           max_scans: number | null
@@ -360,6 +364,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           expires_at?: string | null
+          fields?: Json | null
           id?: string
           label?: string | null
           max_scans?: number | null
@@ -373,6 +378,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           expires_at?: string | null
+          fields?: Json | null
           id?: string
           label?: string | null
           max_scans?: number | null
@@ -824,8 +830,10 @@ export type Database = {
     }
     Functions: {
       can_view_org: { Args: { p_org: string }; Returns: boolean }
+      consume_scan_link: { Args: { p_token: string }; Returns: boolean }
       current_org_code: { Args: never; Returns: string }
       current_role_name: { Args: never; Returns: string }
+      get_scan_link: { Args: { p_token: string }; Returns: Json }
       has_dashboard_role: { Args: { _role: string }; Returns: boolean }
       has_role: {
         Args: {
@@ -838,6 +846,7 @@ export type Database = {
       is_org_admin_of: { Args: { _org: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
       lookup_employee_public: { Args: { p_emp_code: string }; Returns: Json }
+      my_org: { Args: never; Returns: string }
       record_public_scan: { Args: { p_payload: Json }; Returns: Json }
       search_doctors_public: {
         Args: { p_emp_code: string; p_query?: string }
