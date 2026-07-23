@@ -466,28 +466,13 @@ function DetailsPage() {
             </div>
           </Field>
 
-          <label className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/5 p-3.5 cursor-pointer hover:bg-white/10 transition">
-            <input
-              type="checkbox"
-              checked={agreed}
-              onChange={(e) => setAgreed(e.target.checked)}
-              className="mt-0.5 h-5 w-5 flex-shrink-0 rounded border-white/20 bg-white/10 accent-[var(--teal)] cursor-pointer"
-              aria-label="I agree to the consent"
-            />
-            <span className="text-sm text-muted-foreground leading-relaxed">
-              I agree to the consent.
-            </span>
-          </label>
-
-
           {err && <div className="text-base text-destructive">{err}</div>}
 
           <button
             type="submit"
-            disabled={!agreed}
-            className="w-full rounded-full bg-gradient-brand px-6 py-4 text-base font-semibold text-primary-foreground hover:opacity-95 transition shadow-[0_10px_30px_-10px_oklch(0.78_0.15_180/0.6)] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full rounded-full bg-gradient-brand px-6 py-4 text-base font-semibold text-primary-foreground hover:opacity-95 transition shadow-[0_10px_30px_-10px_oklch(0.78_0.15_180/0.6)]"
           >
-            Start Scan →
+            Continue →
           </button>
         </form>
       </div>
