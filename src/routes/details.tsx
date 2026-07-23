@@ -1,3 +1,4 @@
+import { createClientOnlyFn } from "@tanstack/react-start";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,6 +70,12 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+// Client-only warm-up so the server build never sees the .client module.
+const warmUpFaceDetector = createClientOnlyFn(async () => {
+  const mod = await import("../lib/face-detector.client");
+  await mod.initFaceDetector().catch(() => {});
+});
+
 const inputCls =
   "w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3.5 text-base text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-[var(--teal)] focus:ring-2 focus:ring-[var(--teal)]/20 transition";
 
@@ -111,14 +118,13 @@ function DetailsPage() {
         .requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 200));
     idle(() => {
       if (cancelled) return;
-      import("../lib/face-detector.client")
-        .then((m) => m.initFaceDetector())
-        .catch(() => {});
+      warmUpFaceDetector().catch(() => {});
     });
     return () => {
       cancelled = true;
     };
   }, []);
+
 
   // Debounced employee lookup once the code looks complete (>= 4 chars).
   useEffect(() => {
