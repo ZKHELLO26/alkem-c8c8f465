@@ -119,33 +119,253 @@ export type Database = {
         }
         Relationships: []
       }
+      field_definitions: {
+        Row: {
+          active: boolean
+          created_at: string
+          field_key: string
+          id: string
+          label: string
+          org_code: string | null
+          parent_field_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          field_key: string
+          id?: string
+          label: string
+          org_code?: string | null
+          parent_field_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          field_key?: string
+          id?: string
+          label?: string
+          org_code?: string | null
+          parent_field_key?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "field_definitions_org_code_fkey"
+            columns: ["org_code"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      field_options: {
+        Row: {
+          created_at: string
+          extra: Json
+          field_definition_id: string
+          id: string
+          label: string
+          parent_value: string | null
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          extra?: Json
+          field_definition_id: string
+          id?: string
+          label: string
+          parent_value?: string | null
+          value: string
+        }
+        Update: {
+          created_at?: string
+          extra?: Json
+          field_definition_id?: string
+          id?: string
+          label?: string
+          parent_value?: string | null
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "field_options_field_definition_id_fkey"
+            columns: ["field_definition_id"]
+            isOneToOne: false
+            referencedRelation: "field_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_field_visibility: {
+        Row: {
+          key: string
+          org_code: string
+          product_code: string
+          visible: boolean
+        }
+        Insert: {
+          key: string
+          org_code: string
+          product_code: string
+          visible?: boolean
+        }
+        Update: {
+          key?: string
+          org_code?: string
+          product_code?: string
+          visible?: boolean
+        }
+        Relationships: []
+      }
+      org_products: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          monthly_limit: number
+          org_code: string
+          product_code: string
+          scan_url: string | null
+          valid_from: string | null
+          valid_to: string | null
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          monthly_limit?: number
+          org_code: string
+          product_code: string
+          scan_url?: string | null
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          monthly_limit?: number
+          org_code?: string
+          product_code?: string
+          scan_url?: string | null
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_products_org_code_fkey"
+            columns: ["org_code"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "org_products_product_code_fkey"
+            columns: ["product_code"]
+            isOneToOne: false
+            referencedRelation: "scan_products"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           active: boolean
           code: string
           created_at: string
           id: string
+          monthly_scan_limit: number
           name: string
           retention_days: number
           updated_at: string
+          valid_from: string | null
+          valid_to: string | null
         }
         Insert: {
           active?: boolean
           code: string
           created_at?: string
           id?: string
+          monthly_scan_limit?: number
           name: string
           retention_days?: number
           updated_at?: string
+          valid_from?: string | null
+          valid_to?: string | null
         }
         Update: {
           active?: boolean
           code?: string
           created_at?: string
           id?: string
+          monthly_scan_limit?: number
           name?: string
           retention_days?: number
           updated_at?: string
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Relationships: []
+      }
+      scan_parameters: {
+        Row: {
+          category: string | null
+          default_visible: boolean
+          is_sensitive: boolean
+          key: string
+          label: string | null
+          product_code: string
+          unit: string | null
+        }
+        Insert: {
+          category?: string | null
+          default_visible?: boolean
+          is_sensitive?: boolean
+          key: string
+          label?: string | null
+          product_code: string
+          unit?: string | null
+        }
+        Update: {
+          category?: string | null
+          default_visible?: boolean
+          is_sensitive?: boolean
+          key?: string
+          label?: string | null
+          product_code?: string
+          unit?: string | null
+        }
+        Relationships: []
+      }
+      scan_products: {
+        Row: {
+          active: boolean
+          category: string | null
+          code: string
+          color: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          name: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string | null
+          code: string
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          name: string
+        }
+        Update: {
+          active?: boolean
+          category?: string | null
+          code?: string
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          name?: string
         }
         Relationships: []
       }
@@ -179,6 +399,8 @@ export type Database = {
           motion_score: number | null
           org_code: string | null
           org_id: string | null
+          over_expiry: boolean
+          over_limit: boolean
           raw_inputs: Json | null
           ref_code: string
           results: Json | null
@@ -222,6 +444,8 @@ export type Database = {
           motion_score?: number | null
           org_code?: string | null
           org_id?: string | null
+          over_expiry?: boolean
+          over_limit?: boolean
           raw_inputs?: Json | null
           ref_code: string
           results?: Json | null
@@ -265,6 +489,8 @@ export type Database = {
           motion_score?: number | null
           org_code?: string | null
           org_id?: string | null
+          over_expiry?: boolean
+          over_limit?: boolean
           raw_inputs?: Json | null
           ref_code?: string
           results?: Json | null
@@ -365,6 +591,7 @@ export type Database = {
     }
     Functions: {
       can_view_org: { Args: { p_org: string }; Returns: boolean }
+      has_dashboard_role: { Args: { _role: string }; Returns: boolean }
       has_role: {
         Args: {
           p_role: Database["public"]["Enums"]["app_role"]
