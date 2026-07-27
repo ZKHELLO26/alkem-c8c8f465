@@ -293,7 +293,7 @@ function ResultsPage() {
     if (!results || !details || params.length === 0) return;
     if (!details.mobile || !details.countryCode) return;
     // Build a stable key for this scan submission.
-    const sendKey = `wa_sent:${details.countryCode}${details.mobile}:${results.wellnessScore}:${results.hr ?? ""}:${results.bpSysLow ?? ""}-${results.bpSysHigh ?? ""}`;
+    const sendKey = `wa_sent:${details.countryCode}${details.mobile}:${results.wellnessScore}:${results.heartRate ?? ""}:${results.bpSysLow ?? ""}-${results.bpSysHigh ?? ""}`;
     try {
       if (sessionStorage.getItem(sendKey) === "1") return;
       sessionStorage.setItem(sendKey, "1");
