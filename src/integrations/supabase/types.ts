@@ -501,12 +501,14 @@ export type Database = {
           diabetes_risk: string | null
           doctor_city: string | null
           doctor_code: string | null
+          doctor_manual: boolean
           doctor_name: string | null
           doctor_speciality: string | null
           duration_s: number | null
           dyslipidemia_risk: string | null
           employee_code: string | null
           employee_hq: string | null
+          employee_manual: boolean
           employee_name: string | null
           employee_region: string | null
           expression: Json | null
@@ -523,6 +525,9 @@ export type Database = {
           ip_country: string | null
           lifestyle: Json | null
           lighting_score: number | null
+          manager_code: string | null
+          manager_designation: string | null
+          manager_name: string | null
           map_mmhg: number | null
           motion_score: number | null
           obesity_risk: string | null
@@ -593,12 +598,14 @@ export type Database = {
           diabetes_risk?: string | null
           doctor_city?: string | null
           doctor_code?: string | null
+          doctor_manual?: boolean
           doctor_name?: string | null
           doctor_speciality?: string | null
           duration_s?: number | null
           dyslipidemia_risk?: string | null
           employee_code?: string | null
           employee_hq?: string | null
+          employee_manual?: boolean
           employee_name?: string | null
           employee_region?: string | null
           expression?: Json | null
@@ -615,6 +622,9 @@ export type Database = {
           ip_country?: string | null
           lifestyle?: Json | null
           lighting_score?: number | null
+          manager_code?: string | null
+          manager_designation?: string | null
+          manager_name?: string | null
           map_mmhg?: number | null
           motion_score?: number | null
           obesity_risk?: string | null
@@ -685,12 +695,14 @@ export type Database = {
           diabetes_risk?: string | null
           doctor_city?: string | null
           doctor_code?: string | null
+          doctor_manual?: boolean
           doctor_name?: string | null
           doctor_speciality?: string | null
           duration_s?: number | null
           dyslipidemia_risk?: string | null
           employee_code?: string | null
           employee_hq?: string | null
+          employee_manual?: boolean
           employee_name?: string | null
           employee_region?: string | null
           expression?: Json | null
@@ -707,6 +719,9 @@ export type Database = {
           ip_country?: string | null
           lifestyle?: Json | null
           lighting_score?: number | null
+          manager_code?: string | null
+          manager_designation?: string | null
+          manager_name?: string | null
           map_mmhg?: number | null
           motion_score?: number | null
           obesity_risk?: string | null

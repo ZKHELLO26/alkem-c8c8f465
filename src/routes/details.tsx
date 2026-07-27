@@ -104,6 +104,8 @@ function DetailsPage() {
   const [empCode, setEmpCode] = useState("");
   const [emp, setEmp] = useState<EmployeeLookup | null>(null);
   const [empStatus, setEmpStatus] = useState<"idle" | "loading" | "ok" | "notfound">("idle");
+  const [empManualOn, setEmpManualOn] = useState(false);
+  const [empManualName, setEmpManualName] = useState("");
 
   // ── Field-force: doctor typeahead ──────────────────────────────────
   const [docQuery, setDocQuery] = useState("");
@@ -111,6 +113,9 @@ function DetailsPage() {
   const [docOpen, setDocOpen] = useState(false);
   const [doc, setDoc] = useState<DoctorOption | null>(null);
   const [docLoading, setDocLoading] = useState(false);
+  const [docManualOn, setDocManualOn] = useState(false);
+  const [docManualName, setDocManualName] = useState("");
+  const [docManualCity, setDocManualCity] = useState("");
   const docBoxRef = useRef<HTMLDivElement | null>(null);
   const docDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -224,10 +229,14 @@ function DetailsPage() {
   }, []);
 
   const validate = (): string | null => {
-    if (empCode.trim() && empStatus !== "ok")
-      return "Employee code not found. Please check the code or clear the field.";
-    if (empStatus === "ok" && !doc)
-      return "Please select the doctor from your list.";
+    if (empCode.trim() && empStatus !== "ok" && !empManualOn)
+      return "Employee code not found. Please check the code or use ‘Enter manually’.";
+    if (empManualOn && !empManualName.trim())
+      return "Please enter the employee / doctor name for manual entry.";
+    if (empStatus === "ok" && !doc && !docManualOn)
+      return "Please select the doctor from your list or use ‘Add doctor manually’.";
+    if (docManualOn && !docManualName.trim())
+      return "Please enter the doctor's name.";
     if (!d.name.trim()) return "Please enter your name.";
     if (d.mobile.length !== 10)
       return "Please enter a valid 10-digit mobile number.";
@@ -260,14 +269,19 @@ function DetailsPage() {
       waistIn: d.waistIn,
       age: d.age,
       sex: d.sex,
-      employeeCode: emp?.empCode || undefined,
-      employeeName: emp?.empName || undefined,
+      employeeCode: (emp?.empCode || (empManualOn ? empCode.trim() : "")) || undefined,
+      employeeName: (emp?.empName || (empManualOn ? empManualName.trim() : "")) || undefined,
       employeeHq: emp?.hq || undefined,
       employeeRegion: emp?.region || undefined,
+      employeeManual: empManualOn || undefined,
+      managerCode: emp?.isManager ? emp?.empCode : undefined,
+      managerName: emp?.isManager ? (emp?.empName ?? undefined) : undefined,
+      managerDesignation: emp?.isManager ? (emp?.designation ?? undefined) : undefined,
       doctorCode: doc?.doctorCode || undefined,
-      doctorName: doc?.doctorName || undefined,
+      doctorName: doc?.doctorName || (docManualOn ? docManualName.trim() : undefined),
       doctorSpeciality: doc?.speciality || undefined,
-      doctorCity: doc?.hq || doc?.subarea || undefined,
+      doctorCity: doc?.hq || doc?.subarea || (docManualOn ? docManualCity.trim() || undefined : undefined),
+      doctorManual: docManualOn || undefined,
       orgCode: link?.orgCode || emp?.orgCode || undefined,
       linkToken: link?.token || undefined,
       scanType: link?.productCode || undefined,
@@ -299,7 +313,11 @@ function DetailsPage() {
             <input
               className={inputCls}
               value={empCode}
-              onChange={(e) => setEmpCode(e.target.value.toUpperCase().replace(/\s/g, ""))}
+              onChange={(e) => {
+                setEmpCode(e.target.value.toUpperCase().replace(/\s/g, ""));
+                setEmpManualOn(false);
+                setEmpManualName("");
+              }}
               placeholder="Enter your employee code"
               inputMode="text"
               autoComplete="off"
@@ -307,10 +325,35 @@ function DetailsPage() {
             {empStatus === "loading" && (
               <p className="mt-1.5 text-xs text-muted-foreground/80">Looking up…</p>
             )}
-            {empStatus === "notfound" && (
-              <p className="mt-1.5 text-xs text-red-400">
-                Code not found. Please check and re-enter.
-              </p>
+            {empStatus === "notfound" && !empManualOn && (
+              <div className="mt-1.5 flex items-center justify-between">
+                <p className="text-xs text-red-400">Code not found.</p>
+                <button
+                  type="button"
+                  onClick={() => setEmpManualOn(true)}
+                  className="text-xs font-medium text-[var(--teal)] hover:underline"
+                >
+                  Enter manually
+                </button>
+              </div>
+            )}
+            {empManualOn && (
+              <div className="mt-2 space-y-2">
+                <input
+                  className={inputCls}
+                  value={empManualName}
+                  onChange={(e) => setEmpManualName(e.target.value)}
+                  placeholder="Your name / designation (manual entry)"
+                  autoComplete="off"
+                />
+                <button
+                  type="button"
+                  onClick={() => { setEmpManualOn(false); setEmpManualName(""); }}
+                  className="text-xs text-muted-foreground hover:underline"
+                >
+                  Cancel manual entry
+                </button>
+              </div>
             )}
             {empStatus === "ok" && emp && (
               <div className="mt-2 rounded-xl border border-[var(--teal)]/30 bg-[var(--teal)]/10 px-4 py-3 text-sm">
@@ -318,6 +361,11 @@ function DetailsPage() {
                 <div className="text-muted-foreground">
                   {[emp.designation, emp.hq, emp.region].filter(Boolean).join(" • ")}
                 </div>
+                {emp.isManager && (
+                  <div className="mt-2 text-xs text-[var(--teal)]">
+                    Manager access — you can search doctors across the whole organization.
+                  </div>
+                )}
               </div>
             )}
           </Field>
@@ -332,12 +380,14 @@ function DetailsPage() {
                   onChange={(e) => {
                     if (doc) setDoc(null);
                     setDocQuery(e.target.value);
+                    if (docManualOn) setDocManualOn(false);
                   }}
                   onFocus={() => {
-                    if (!doc) setDocOpen(true);
+                    if (!doc && !docManualOn) setDocOpen(true);
                   }}
-                  placeholder="Type doctor name…"
+                  placeholder={emp.isManager ? "Search by name, code, city, speciality…" : "Type doctor name…"}
                   autoComplete="off"
+                  disabled={docManualOn}
                 />
                 {doc && (
                   <button
@@ -349,14 +399,14 @@ function DetailsPage() {
                     ×
                   </button>
                 )}
-                {docOpen && !doc && (
+                {docOpen && !doc && !docManualOn && (
                   <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-72 overflow-y-auto rounded-xl border border-black/10 bg-white shadow-2xl">
                     {docLoading && (
                       <div className="px-4 py-3 text-sm text-gray-500">Searching…</div>
                     )}
                     {!docLoading && docOptions.length === 0 && (
                       <div className="px-4 py-3 text-sm text-gray-500">
-                        No matching doctor in your list.
+                        No matching doctor in {emp.isManager ? "the organization" : "your list"}.
                       </div>
                     )}
                     {!docLoading &&
@@ -369,20 +419,58 @@ function DetailsPage() {
                         >
                           <div className="text-sm font-medium text-gray-900">{o.doctorName}</div>
                           <div className="text-xs text-gray-600">
-                            {[o.speciality, o.hq, o.subarea].filter(Boolean).join(" • ")}
+                            {[o.doctorCode, o.speciality, o.hq, o.subarea].filter(Boolean).join(" • ")}
                           </div>
                         </button>
                       ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDocOpen(false);
+                        setDocManualOn(true);
+                        setDocManualName(docQuery.trim());
+                        setDocManualCity("");
+                      }}
+                      className="w-full text-left px-4 py-3 text-sm font-medium text-[var(--teal)] hover:bg-gray-100 bg-gray-50"
+                    >
+                      + Add doctor manually
+                    </button>
                   </div>
                 )}
               </div>
+              {docManualOn && (
+                <div className="mt-2 space-y-2">
+                  <input
+                    className={inputCls}
+                    value={docManualName}
+                    onChange={(e) => setDocManualName(e.target.value)}
+                    placeholder="Doctor's name (manual entry)"
+                    autoComplete="off"
+                  />
+                  <input
+                    className={inputCls}
+                    value={docManualCity}
+                    onChange={(e) => setDocManualCity(e.target.value)}
+                    placeholder="City / HQ (optional)"
+                    autoComplete="off"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { setDocManualOn(false); setDocManualName(""); setDocManualCity(""); }}
+                    className="text-xs text-muted-foreground hover:underline"
+                  >
+                    Cancel manual entry
+                  </button>
+                </div>
+              )}
               {doc && (
                 <p className="mt-1.5 text-xs text-muted-foreground/80">
-                  {[doc.speciality, doc.hq, doc.subarea].filter(Boolean).join(" • ")}
+                  {[doc.doctorCode, doc.speciality, doc.hq, doc.subarea].filter(Boolean).join(" • ")}
                 </p>
               )}
             </Field>
           )}
+
 
           <Field label={emp ? "Patient Name" : "Name"}>
             <input
