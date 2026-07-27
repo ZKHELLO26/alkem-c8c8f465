@@ -1,17 +1,26 @@
-// Uploads the generated PDF to Supabase Storage, creates a signed URL,
-// and asks the Interakt server function to send the "face_scan" WhatsApp
-// template with the report attached.
-import { supabase } from "@/integrations/supabase/client";
+// Generates the PDF report, encodes it, and asks the server function to
+// upload it (via service role) into the private bucket, sign it, and send
+// the "face_scan" WhatsApp template through Interakt. The browser has NO
+// direct access to the storage bucket.
 import { generateReportPdf, type PdfParam } from "./report-pdf";
 import { sendWhatsappReport } from "./whatsapp.functions";
 import { wellnessLabel, type ScanResults, type UserDetails } from "./scan-store";
 
-const BUCKET = "whatsapp-reports";
-// Signed URL lifetime — WhatsApp fetches the media once at send time, so a
-// day is plenty. Keeping it short-lived means abandoned links auto-expire.
-const SIGNED_URL_TTL_SEC = 60 * 60 * 24;
-
 let sentFor: string | null = null;
+
+async function blobToBase64(blob: Blob): Promise<string> {
+  const buf = await blob.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(
+      null,
+      Array.from(bytes.subarray(i, i + chunk)) as unknown as number[],
+    );
+  }
+  return btoa(binary);
+}
 
 export async function sendReportToWhatsapp(
   details: UserDetails,
@@ -33,32 +42,20 @@ export async function sendReportToWhatsapp(
     );
     if (!out) return;
     const { blob, filename } = out;
-
-    const safeName = (details.name || "user").replace(/[^A-Za-z0-9_-]+/g, "_").slice(0, 40);
-    const path = `${new Date().toISOString().slice(0, 10)}/${safeName}-${Date.now()}.pdf`;
-
-    const { error: upErr } = await supabase.storage
-      .from(BUCKET)
-      .upload(path, blob, { contentType: "application/pdf", upsert: false });
-    if (upErr) throw upErr;
-
-    const { data: signed, error: sErr } = await supabase.storage
-      .from(BUCKET)
-      .createSignedUrl(path, SIGNED_URL_TTL_SEC);
-    if (sErr || !signed?.signedUrl) throw sErr ?? new Error("no signed url");
+    const pdfBase64 = await blobToBase64(blob);
 
     const res = await sendWhatsappReport({
       data: {
         name: details.name,
         countryCode: details.countryCode,
         mobile: details.mobile,
-        pdfUrl: signed.signedUrl,
+        pdfBase64,
         fileName: filename,
       },
     });
     if (!res?.ok) {
       console.warn("[whatsapp] interakt returned non-ok:", res);
-      sentFor = null; // allow a retry next mount
+      sentFor = null;
     }
   } catch (e) {
     console.warn("[whatsapp] send failed:", e);
