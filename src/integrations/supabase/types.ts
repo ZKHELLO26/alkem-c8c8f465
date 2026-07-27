@@ -851,6 +851,7 @@ export type Database = {
       consume_scan_link: { Args: { p_token: string }; Returns: boolean }
       current_org_code: { Args: never; Returns: string }
       current_role_name: { Args: never; Returns: string }
+      get_kpi_counts: { Args: { p_org?: string }; Returns: Json }
       get_scan_link: { Args: { p_token: string }; Returns: Json }
       has_dashboard_role: { Args: { _role: string }; Returns: boolean }
       has_role: {
