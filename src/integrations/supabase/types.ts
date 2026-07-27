@@ -14,51 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      report_queue: {
-        Row: {
-          id: string
-          scan_id: string
-          org_code: string | null
-          name: string | null
-          country_code: string | null
-          mobile: string | null
-          pdf_path: string | null
-          status: string
-          attempts: number
-          last_error: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          scan_id: string
-          org_code?: string | null
-          name?: string | null
-          country_code?: string | null
-          mobile?: string | null
-          pdf_path?: string | null
-          status?: string
-          attempts?: number
-          last_error?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          scan_id?: string
-          org_code?: string | null
-          name?: string | null
-          country_code?: string | null
-          mobile?: string | null
-          pdf_path?: string | null
-          status?: string
-          attempts?: number
-          last_error?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       dashboard_access: {
         Row: {
           created_at: string
@@ -388,6 +343,51 @@ export type Database = {
             referencedColumns: ["code"]
           },
         ]
+      }
+      report_queue: {
+        Row: {
+          attempts: number
+          country_code: string | null
+          created_at: string
+          id: string
+          last_error: string | null
+          mobile: string | null
+          name: string | null
+          org_code: string | null
+          pdf_path: string | null
+          scan_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          country_code?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          mobile?: string | null
+          name?: string | null
+          org_code?: string | null
+          pdf_path?: string | null
+          scan_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          country_code?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          mobile?: string | null
+          name?: string | null
+          org_code?: string | null
+          pdf_path?: string | null
+          scan_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       scan_links: {
         Row: {
