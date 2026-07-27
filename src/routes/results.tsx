@@ -279,10 +279,17 @@ function ResultsPage() {
     setAge(d.age);
     // Fire-and-forget telemetry (only if user consented).
     import("../lib/telemetry-submit").then((m) => m.submitScanTelemetry()).catch(() => {});
+    // Fire-and-forget WhatsApp send (only if we have a mobile number).
+    if (d.mobile && d.countryCode) {
+      import("../lib/send-whatsapp").then((m) => m.sendReportToWhatsapp(d, r, age)).catch((e) => {
+        console.warn("[whatsapp] send failed (non-blocking):", e);
+      });
+    }
     // Give telemetry a moment to land the new row, then enable trends.
     const t = setTimeout(() => setShowTrends(true), 1800);
     return () => clearTimeout(t);
   }, [navigate]);
+
 
   const params = useMemo(() => (results ? buildParams(results, age) : []), [results, age]);
   const activeParams = useMemo(() => params.filter((p) => p.group === activeGroup), [params, activeGroup]);
