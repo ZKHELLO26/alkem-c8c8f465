@@ -1,9 +1,11 @@
-// Generates the PDF report, encodes it, and asks the server function to
-// upload it (via service role) into the private bucket, sign it, and send
-// the "face_scan" WhatsApp template through Interakt. The browser has NO
-// direct access to the storage bucket.
+// Generates the PDF report and asks the server to queue + deliver it via
+// Interakt. Real duplicate-prevention now lives in the database (report_queue,
+// keyed on scan_id) — this file's own guard is just a fast local skip, not
+// the safety mechanism, so a page reload or flaky network can no longer
+// cause a missed or doubled report.
 import { generateReportPdf, type PdfParam } from "./report-pdf";
-import { sendWhatsappReport } from "./whatsapp.functions";
+import { sendWhatsappReport, retryQueuedReports } from "./whatsapp.functions";
+import { loadScanId } from "./scan-store";
 import { wellnessLabel, type ScanResults, type UserDetails } from "./scan-store";
 
 let sentFor: string | null = null;
@@ -28,9 +30,10 @@ export async function sendReportToWhatsapp(
   orderedParams: PdfParam[],
 ): Promise<void> {
   if (!details.mobile || !details.countryCode) return;
-  const key = `${details.mobile}-${results.wellnessScore}-${details.name}`;
-  if (sentFor === key) return;
-  sentFor = key;
+  const scanId = loadScanId();
+  if (!scanId) return; // no stable id yet — nothing safe to key the queue on
+  if (sentFor === scanId) return; // quick local skip, not the real guard
+  sentFor = scanId;
 
   try {
     const out = await generateReportPdf(
@@ -46,19 +49,27 @@ export async function sendReportToWhatsapp(
 
     const res = await sendWhatsappReport({
       data: {
+        scanId,
         name: details.name,
         countryCode: details.countryCode,
         mobile: details.mobile,
         pdfBase64,
         fileName: filename,
+        orgCode: details.orgCode,
       },
     });
     if (!res?.ok) {
-      console.warn("[whatsapp] interakt returned non-ok:", res);
-      sentFor = null;
+      // Not a dead end anymore: this attempt is recorded as "failed" in the
+      // database and will be retried automatically (see below) — no manual
+      // action needed, and no risk of it silently vanishing.
+      console.warn("[whatsapp] send failed, will auto-retry later:", res);
     }
   } catch (e) {
-    console.warn("[whatsapp] send failed:", e);
-    sentFor = null;
+    console.warn("[whatsapp] send failed, will auto-retry later:", e);
   }
+
+  // Piggyback: while we're here, nudge along any other camp attendee's
+  // report that failed earlier. Cheap, fire-and-forget, self-healing —
+  // no separate scheduler/cron needed.
+  retryQueuedReports().catch(() => {});
 }
