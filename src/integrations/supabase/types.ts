@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      report_queue: {
+        Row: {
+          id: string
+          scan_id: string
+          org_code: string | null
+          name: string | null
+          country_code: string | null
+          mobile: string | null
+          pdf_path: string | null
+          status: string
+          attempts: number
+          last_error: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          scan_id: string
+          org_code?: string | null
+          name?: string | null
+          country_code?: string | null
+          mobile?: string | null
+          pdf_path?: string | null
+          status?: string
+          attempts?: number
+          last_error?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          scan_id?: string
+          org_code?: string | null
+          name?: string | null
+          country_code?: string | null
+          mobile?: string | null
+          pdf_path?: string | null
+          status?: string
+          attempts?: number
+          last_error?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       dashboard_access: {
         Row: {
           created_at: string
