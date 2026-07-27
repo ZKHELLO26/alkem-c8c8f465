@@ -18,8 +18,9 @@ export const Route = createFileRoute("/api/public/report-queue")({
           const result = await processReportQueue(10);
           return Response.json({ ok: true, ...result });
         } catch (error) {
-          console.error("[whatsapp] scheduled queue run failed", error);
-          return Response.json({ ok: false }, { status: 500 });
+          const message = error instanceof Error ? error.message : String(error);
+          console.error("[whatsapp] scheduled queue run failed", message);
+          return Response.json({ ok: false, error: message }, { status: 500 });
         }
       },
     },
