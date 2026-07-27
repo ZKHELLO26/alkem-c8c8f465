@@ -18,6 +18,7 @@ import { Route as DetailsRouteImport } from './routes/details'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as STokenRouteImport } from './routes/s.$token'
+import { Route as ApiPublicReportQueueRouteImport } from './routes/api/public/report-queue'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -64,6 +65,11 @@ const STokenRoute = STokenRouteImport.update({
   path: '/s/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicReportQueueRoute = ApiPublicReportQueueRouteImport.update({
+  id: '/api/public/report-queue',
+  path: '/api/public/report-queue',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/scan': typeof ScanRoute
   '/terms': typeof TermsRoute
   '/s/$token': typeof STokenRoute
+  '/api/public/report-queue': typeof ApiPublicReportQueueRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/scan': typeof ScanRoute
   '/terms': typeof TermsRoute
   '/s/$token': typeof STokenRoute
+  '/api/public/report-queue': typeof ApiPublicReportQueueRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/scan': typeof ScanRoute
   '/terms': typeof TermsRoute
   '/s/$token': typeof STokenRoute
+  '/api/public/report-queue': typeof ApiPublicReportQueueRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/scan'
     | '/terms'
     | '/s/$token'
+    | '/api/public/report-queue'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/scan'
     | '/terms'
     | '/s/$token'
+    | '/api/public/report-queue'
   id:
     | '__root__'
     | '/'
@@ -133,6 +144,7 @@ export interface FileRouteTypes {
     | '/scan'
     | '/terms'
     | '/s/$token'
+    | '/api/public/report-queue'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -145,6 +157,7 @@ export interface RootRouteChildren {
   ScanRoute: typeof ScanRoute
   TermsRoute: typeof TermsRoute
   STokenRoute: typeof STokenRoute
+  ApiPublicReportQueueRoute: typeof ApiPublicReportQueueRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -212,6 +225,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof STokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/report-queue': {
+      id: '/api/public/report-queue'
+      path: '/api/public/report-queue'
+      fullPath: '/api/public/report-queue'
+      preLoaderRoute: typeof ApiPublicReportQueueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -225,6 +245,7 @@ const rootRouteChildren: RootRouteChildren = {
   ScanRoute: ScanRoute,
   TermsRoute: TermsRoute,
   STokenRoute: STokenRoute,
+  ApiPublicReportQueueRoute: ApiPublicReportQueueRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

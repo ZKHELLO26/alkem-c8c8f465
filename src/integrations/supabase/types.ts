@@ -353,9 +353,13 @@ export type Database = {
           last_error: string | null
           mobile: string | null
           name: string | null
+          next_attempt_at: string
           org_code: string | null
           pdf_path: string | null
+          provider_message_id: string | null
+          report_payload: Json | null
           scan_id: string
+          sent_at: string | null
           status: string
           updated_at: string
         }
@@ -367,9 +371,13 @@ export type Database = {
           last_error?: string | null
           mobile?: string | null
           name?: string | null
+          next_attempt_at?: string
           org_code?: string | null
           pdf_path?: string | null
+          provider_message_id?: string | null
+          report_payload?: Json | null
           scan_id: string
+          sent_at?: string | null
           status?: string
           updated_at?: string
         }
@@ -381,9 +389,13 @@ export type Database = {
           last_error?: string | null
           mobile?: string | null
           name?: string | null
+          next_attempt_at?: string
           org_code?: string | null
           pdf_path?: string | null
+          provider_message_id?: string | null
+          report_payload?: Json | null
           scan_id?: string
+          sent_at?: string | null
           status?: string
           updated_at?: string
         }
@@ -893,6 +905,43 @@ export type Database = {
     }
     Functions: {
       can_view_org: { Args: { p_org: string }; Returns: boolean }
+      claim_report_jobs: {
+        Args: { p_limit?: number }
+        Returns: {
+          attempts: number
+          country_code: string | null
+          created_at: string
+          id: string
+          last_error: string | null
+          mobile: string | null
+          name: string | null
+          next_attempt_at: string
+          org_code: string | null
+          pdf_path: string | null
+          provider_message_id: string | null
+          report_payload: Json | null
+          scan_id: string
+          sent_at: string | null
+          status: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "report_queue"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      complete_report_job: {
+        Args: {
+          p_error?: string
+          p_id: string
+          p_ok: boolean
+          p_pdf_path?: string
+          p_provider_message_id?: string
+        }
+        Returns: undefined
+      }
       consume_scan_link: { Args: { p_token: string }; Returns: boolean }
       current_org_code: { Args: never; Returns: string }
       current_role_name: { Args: never; Returns: string }

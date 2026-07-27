@@ -3,6 +3,7 @@
 // Fire-and-forget; never blocks the UI.
 import { supabase } from "@/integrations/supabase/client";
 import { consentTextHash } from "./consent-text";
+import { processQueuedWhatsappReports } from "./whatsapp.functions";
 
 import {
   loadAnswers,
@@ -146,6 +147,12 @@ export async function submitScanTelemetry(): Promise<void> {
       p_payload: payload as never,
     });
     if (error) throw error;
+    // The database trigger has now durably queued this exact scan. Nudge the
+    // server worker for immediate delivery; the scheduled worker remains the
+    // fallback if this browser disappears or the provider is temporarily down.
+    processQueuedWhatsappReports().catch((queueError) => {
+      console.warn("[whatsapp] immediate queue run failed; scheduled retry will recover:", queueError);
+    });
     // Clean up the blob refs to free memory
     clearTelemetryArtifacts();
   } catch (e) {
