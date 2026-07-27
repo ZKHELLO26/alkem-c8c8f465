@@ -288,9 +288,16 @@ function ResultsPage() {
   const activeParams = useMemo(() => params.filter((p) => p.group === activeGroup), [params, activeGroup]);
 
   // Fire-and-forget WhatsApp send once results + params are ready.
+  // Guard against duplicate sends (StrictMode double-invoke, re-renders, remounts).
   useEffect(() => {
     if (!results || !details || params.length === 0) return;
     if (!details.mobile || !details.countryCode) return;
+    // Build a stable key for this scan submission.
+    const sendKey = `wa_sent:${details.countryCode}${details.mobile}:${results.wellnessScore}:${results.hr ?? ""}:${results.bpSysLow ?? ""}-${results.bpSysHigh ?? ""}`;
+    try {
+      if (sessionStorage.getItem(sendKey) === "1") return;
+      sessionStorage.setItem(sendKey, "1");
+    } catch {}
     const groupOrder = GROUPS.map((g) => g.key);
     const orderedParams = [...params]
       .sort((a, b) => groupOrder.indexOf(a.group) - groupOrder.indexOf(b.group))
@@ -304,8 +311,12 @@ function ResultsPage() {
       }));
     import("../lib/send-whatsapp")
       .then((m) => m.sendReportToWhatsapp(details, results, orderedParams))
-      .catch((e) => console.warn("[whatsapp] send failed (non-blocking):", e));
+      .catch((e) => {
+        console.warn("[whatsapp] send failed (non-blocking):", e);
+        try { sessionStorage.removeItem(sendKey); } catch {}
+      });
   }, [results, details, params]);
+
 
 
   const downloadPdf = async () => {
