@@ -124,8 +124,10 @@ export async function generateReportPdf(
   r: ScanResults,
   params: PdfParam[],
   wellnessLabel: string,
-) {
+  options?: { returnBlob?: boolean },
+): Promise<{ blob: Blob; filename: string } | void> {
   const { default: jsPDF } = await import("jspdf");
+
   const fonts = await loadPoppins().catch(() => null);
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   if (fonts) {
