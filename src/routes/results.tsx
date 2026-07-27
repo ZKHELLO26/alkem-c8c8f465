@@ -284,14 +284,29 @@ function ResultsPage() {
     return () => clearTimeout(t);
   }, [navigate]);
 
-    // Give telemetry a moment to land the new row, then enable trends.
-    const t = setTimeout(() => setShowTrends(true), 1800);
-    return () => clearTimeout(t);
-  }, [navigate]);
-
-
   const params = useMemo(() => (results ? buildParams(results, age) : []), [results, age]);
   const activeParams = useMemo(() => params.filter((p) => p.group === activeGroup), [params, activeGroup]);
+
+  // Fire-and-forget WhatsApp send once results + params are ready.
+  useEffect(() => {
+    if (!results || !details || params.length === 0) return;
+    if (!details.mobile || !details.countryCode) return;
+    const groupOrder = GROUPS.map((g) => g.key);
+    const orderedParams = [...params]
+      .sort((a, b) => groupOrder.indexOf(a.group) - groupOrder.indexOf(b.group))
+      .map((p) => ({
+        group: p.group,
+        name: p.name,
+        value: p.value,
+        range: p.range,
+        explain: p.explain,
+        status: p.status,
+      }));
+    import("../lib/send-whatsapp")
+      .then((m) => m.sendReportToWhatsapp(details, results, orderedParams))
+      .catch((e) => console.warn("[whatsapp] send failed (non-blocking):", e));
+  }, [results, details, params]);
+
 
   const downloadPdf = async () => {
     if (!results || !details || downloading) return;
