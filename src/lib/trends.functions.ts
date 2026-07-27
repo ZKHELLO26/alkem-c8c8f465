@@ -1,16 +1,13 @@
-// Trends lookup gated by an unguessable per-device user id.
+// Trends lookup gated strictly by an unguessable per-device user id.
 //
-// To prevent enumeration by phone number, the caller MUST supply the random
-// UUID that was assigned to their device (stored in localStorage as
-// vitalscan.userId) AND the phone number that matches the stored user row.
-// Both must match — a bare phone number is not enough.
+// To prevent enumeration by phone number, the caller ONLY supplies the
+// random UUID that was assigned to their device (stored in localStorage as
+// vitalscan.userId). Phone number is never accepted as a lookup key here.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 const InputSchema = z.object({
   userId: z.string().uuid(),
-  countryCode: z.string().max(8).optional(),
-  mobile: z.string().max(32),
 });
 
 export type TrendPoint = {
@@ -28,14 +25,6 @@ export type TrendsResult = {
   points: TrendPoint[];
 };
 
-function normMobile(cc?: string, mob?: string): string | null {
-  if (!mob) return null;
-  const digits = mob.replace(/\D/g, "");
-  if (!digits) return null;
-  const ccDigits = (cc ?? "").replace(/\D/g, "");
-  return `+${ccDigits}${digits}`;
-}
-
 function num(v: unknown): number | null {
   return typeof v === "number" && Number.isFinite(v) ? v : null;
 }
@@ -52,9 +41,6 @@ function avg(a: unknown, b: unknown): number | null {
 export const getScanTrends = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }): Promise<TrendsResult> => {
-    const mobileNorm = normMobile(data.countryCode, data.mobile);
-    if (!mobileNorm) return { scans: 0, points: [] };
-
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return { scans: 0, points: [] };
     }
@@ -66,12 +52,12 @@ export const getScanTrends = createServerFn({ method: "POST" })
       return { scans: 0, points: [] };
     }
 
-    // Require BOTH id and mobile to match — prevents phone-number enumeration.
+    // Only the device that generated this userId knows it (random UUID stored
+    // in localStorage). No phone/email is accepted as a lookup key.
     const { data: user } = await supabaseAdmin
       .from("scan_users")
       .select("id")
       .eq("id", data.userId)
-      .eq("mobile_norm", mobileNorm)
       .limit(1)
       .maybeSingle();
     if (!user?.id) return { scans: 0, points: [] };
