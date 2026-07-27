@@ -30,12 +30,9 @@ function fmtDate(iso: string) {
   }
 }
 
-export default function TrendsSection({
-  countryCode,
-  mobile,
-}: {
-  countryCode: string;
-  mobile: string;
+export default function TrendsSection(_props: {
+  countryCode?: string;
+  mobile?: string;
 }) {
   const [points, setPoints] = useState<TrendPoint[] | null>(null);
   const [metric, setMetric] = useState<MetricKey>("wellness");
@@ -43,7 +40,7 @@ export default function TrendsSection({
   useEffect(() => {
     let cancelled = false;
     const userId = loadOrCreateUserId();
-    getScanTrends({ data: { userId, countryCode, mobile } })
+    getScanTrends({ data: { userId } })
       .then((res) => {
         if (!cancelled) setPoints(res.points);
       })
@@ -53,7 +50,8 @@ export default function TrendsSection({
     return () => {
       cancelled = true;
     };
-  }, [countryCode, mobile]);
+  }, []);
+
 
   const active = METRICS.find((m) => m.key === metric)!;
 
