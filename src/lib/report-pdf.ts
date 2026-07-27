@@ -570,5 +570,10 @@ export async function generateReportPdf(
   addPageNumbers();
 
   const filename = `VitalScan-Report-${(d.name || "user").replace(/\s+/g, "_")}-${today.replace(/[ ,]+/g, "-")}.pdf`;
+  if (options?.returnBlob) {
+    const blob = doc.output("blob") as Blob;
+    return { blob, filename };
+  }
   doc.save(filename);
 }
+
