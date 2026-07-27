@@ -229,10 +229,14 @@ function DetailsPage() {
   }, []);
 
   const validate = (): string | null => {
-    if (empCode.trim() && empStatus !== "ok")
-      return "Employee code not found. Please check the code or clear the field.";
-    if (empStatus === "ok" && !doc)
-      return "Please select the doctor from your list.";
+    if (empCode.trim() && empStatus !== "ok" && !empManualOn)
+      return "Employee code not found. Please check the code or use ‘Enter manually’.";
+    if (empManualOn && !empManualName.trim())
+      return "Please enter the employee / doctor name for manual entry.";
+    if (empStatus === "ok" && !doc && !docManualOn)
+      return "Please select the doctor from your list or use ‘Add doctor manually’.";
+    if (docManualOn && !docManualName.trim())
+      return "Please enter the doctor's name.";
     if (!d.name.trim()) return "Please enter your name.";
     if (d.mobile.length !== 10)
       return "Please enter a valid 10-digit mobile number.";
