@@ -295,8 +295,9 @@ function ResultsPage() {
     // Build a stable key for this scan submission.
     const sendKey = `wa_sent:${details.countryCode}${details.mobile}:${results.wellnessScore}:${results.heartRate ?? ""}:${results.bpSysLow ?? ""}-${results.bpSysHigh ?? ""}`;
     try {
-      if (sessionStorage.getItem(sendKey) === "1") return;
-      sessionStorage.setItem(sendKey, "1");
+      const state = sessionStorage.getItem(sendKey);
+      if (state === "sending" || state === "sent") return;
+      sessionStorage.setItem(sendKey, "sending");
     } catch {}
     const groupOrder = GROUPS.map((g) => g.key);
     const orderedParams = [...params]
@@ -311,6 +312,12 @@ function ResultsPage() {
       }));
     import("../lib/send-whatsapp")
       .then((m) => m.sendReportToWhatsapp(details, results, orderedParams))
+      .then((sent) => {
+        try {
+          if (sent) sessionStorage.setItem(sendKey, "sent");
+          else sessionStorage.removeItem(sendKey);
+        } catch {}
+      })
       .catch((e) => {
         console.warn("[whatsapp] send failed (non-blocking):", e);
         try { sessionStorage.removeItem(sendKey); } catch {}
