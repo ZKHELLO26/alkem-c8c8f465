@@ -22,10 +22,15 @@ export type UserDetails = {
   employeeName?: string;
   employeeHq?: string;
   employeeRegion?: string;
+  employeeManual?: boolean;
+  managerCode?: string;
+  managerName?: string;
+  managerDesignation?: string;
   doctorCode?: string;
   doctorName?: string;
   doctorSpeciality?: string;
   doctorCity?: string;
+  doctorManual?: boolean;
   orgCode?: string;
   // Tokenised scan-link context (set when arriving via /s/:token)
   linkToken?: string;
