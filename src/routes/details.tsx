@@ -104,6 +104,8 @@ function DetailsPage() {
   const [empCode, setEmpCode] = useState("");
   const [emp, setEmp] = useState<EmployeeLookup | null>(null);
   const [empStatus, setEmpStatus] = useState<"idle" | "loading" | "ok" | "notfound">("idle");
+  const [empManualOn, setEmpManualOn] = useState(false);
+  const [empManualName, setEmpManualName] = useState("");
 
   // ── Field-force: doctor typeahead ──────────────────────────────────
   const [docQuery, setDocQuery] = useState("");
@@ -111,6 +113,9 @@ function DetailsPage() {
   const [docOpen, setDocOpen] = useState(false);
   const [doc, setDoc] = useState<DoctorOption | null>(null);
   const [docLoading, setDocLoading] = useState(false);
+  const [docManualOn, setDocManualOn] = useState(false);
+  const [docManualName, setDocManualName] = useState("");
+  const [docManualCity, setDocManualCity] = useState("");
   const docBoxRef = useRef<HTMLDivElement | null>(null);
   const docDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
