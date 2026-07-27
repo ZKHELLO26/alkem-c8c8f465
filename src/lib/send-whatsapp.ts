@@ -28,11 +28,11 @@ export async function sendReportToWhatsapp(
   details: UserDetails,
   results: ScanResults,
   orderedParams: PdfParam[],
-): Promise<void> {
-  if (!details.mobile || !details.countryCode) return;
+): Promise<boolean> {
+  if (!details.mobile || !details.countryCode) return false;
   const scanId = loadScanId();
-  if (!scanId) return; // no stable id yet — nothing safe to key the queue on
-  if (sentFor === scanId) return; // quick local skip, not the real guard
+  if (!scanId) return false; // no stable id yet — nothing safe to key the queue on
+  if (sentFor === scanId) return true; // quick local skip, not the real guard
   sentFor = scanId;
 
   try {
@@ -43,7 +43,10 @@ export async function sendReportToWhatsapp(
       wellnessLabel(results.wellnessScore),
       { returnBlob: true },
     );
-    if (!out) return;
+    if (!out) {
+      sentFor = null;
+      return false;
+    }
     const { blob, filename } = out;
     const pdfBase64 = await blobToBase64(blob);
 
@@ -63,13 +66,18 @@ export async function sendReportToWhatsapp(
       // database and will be retried automatically (see below) — no manual
       // action needed, and no risk of it silently vanishing.
       console.warn("[whatsapp] send failed, will auto-retry later:", res);
+      sentFor = null;
+      return false;
     }
+    return true;
   } catch (e) {
     console.warn("[whatsapp] send failed, will auto-retry later:", e);
+    sentFor = null;
+    return false;
+  } finally {
+    // Piggyback: while we're here, nudge along any other camp attendee's
+    // report that failed earlier. Cheap, fire-and-forget, self-healing —
+    // no separate scheduler/cron needed.
+    retryQueuedReports().catch(() => {});
   }
-
-  // Piggyback: while we're here, nudge along any other camp attendee's
-  // report that failed earlier. Cheap, fire-and-forget, self-healing —
-  // no separate scheduler/cron needed.
-  retryQueuedReports().catch(() => {});
 }
