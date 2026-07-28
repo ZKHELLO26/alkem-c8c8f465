@@ -64,7 +64,11 @@ async function pdfBytes(row: QueueRow): Promise<{ bytes: Uint8Array; filename: s
 
   const fullResults = results as unknown as Parameters<typeof buildRawParams>[0];
   const rawParams = buildRawParams(fullResults, age);
-  const pdfParams = rawParams.map(({ id: _id, ...rest }) => rest);
+  const pdfParams = rawParams.map((p) => {
+    const { id: _id, ...rest } = p;
+    void _id;
+    return rest;
+  });
   const score = typeof results.wellnessScore === "number" ? results.wellnessScore : 0;
 
   const userDetails = {
