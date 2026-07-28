@@ -41,7 +41,7 @@ function avg(a: unknown, b: unknown): number | null {
 export const getScanTrends = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }): Promise<TrendsResult> => {
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY && !process.env.SB_SERVICE_ROLE_KEY) {
       return { scans: 0, points: [] };
     }
 
