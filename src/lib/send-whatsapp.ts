@@ -48,7 +48,11 @@ export async function tryDeliverReportFromThisDevice(
 
   try {
     const rawParams = buildRawParams(results, details.age);
-    const pdfParams: PdfParam[] = rawParams.map(({ id: _id, ...rest }) => rest);
+    const pdfParams: PdfParam[] = rawParams.map((p) => {
+      const { id: _id, ...rest } = p;
+      void _id;
+      return rest;
+    });
 
     const out = await generateReportPdf(
       details,
