@@ -1,4 +1,3 @@
-import { jsPDF } from "jspdf";
 import type { Json } from "@/integrations/supabase/types";
 
 const BUCKET = "whatsapp-reports";
@@ -6,12 +5,14 @@ const SIGNED_URL_TTL_SEC = 60 * 60 * 24;
 
 type ReportDetails = {
   name?: string;
+  email?: string;
   countryCode?: string;
   mobile?: string;
   age?: number;
   sex?: string;
   heightCm?: number;
   weightKg?: number;
+  waistIn?: number;
   doctorName?: string;
   employeeName?: string;
 };
@@ -41,113 +42,53 @@ type AdminClient = {
   };
 };
 
-const RESULT_LABELS: Array<[string, string, string]> = [
-  ["wellnessScore", "Wellness Score", "/100"], ["heartRate", "Heart Rate", "bpm"],
-  ["respiration", "Respiration", "breaths/min"], ["hrv", "HRV", "ms"], ["stress", "Stress", "/100"],
-  ["spo2Low", "SpO2 Low", "%"], ["spo2High", "SpO2 High", "%"],
-  ["bpSysLow", "Systolic BP Low", "mmHg"], ["bpSysHigh", "Systolic BP High", "mmHg"],
-  ["bpDiaLow", "Diastolic BP Low", "mmHg"], ["bpDiaHigh", "Diastolic BP High", "mmHg"],
-  ["bmi", "BMI", ""], ["absi", "ABSI", ""], ["idealWeight", "Ideal Weight", "kg"],
-  ["vo2Max", "VO2 Max", "ml/kg/min"], ["cardiacWorkload", "Cardiac Workload", ""],
-  ["hrr", "Heart Rate Reserve", "bpm"], ["sdnn", "SDNN", "ms"], ["rmssd", "RMSSD", "ms"],
-  ["pnn50", "pNN50", "%"], ["cardiacOutput", "Cardiac Output", "L/min"], ["map", "Mean Arterial Pressure", "mmHg"],
-  ["hrMax", "Maximum Heart Rate", "bpm"], ["targetHrLow", "Target HR Low", "bpm"],
-  ["targetHrHigh", "Target HR High", "bpm"], ["heartUtilized", "Heart Utilized", "%"],
-  ["bloodVolume", "Blood Volume", "L"], ["totalBodyWater", "Total Body Water", "L"],
-  ["bodyWaterPct", "Body Water", "%"], ["bodyFatPct", "Body Fat", "%"],
-  ["hypertensionRisk", "Hypertension Risk", ""], ["diabetesRisk", "HbA1c Risk", ""],
-  ["dyslipidemiaRisk", "Cholesterol Risk", ""], ["obesityRisk", "Obesity Risk", ""],
-  ["cardioRisk", "Cardiovascular Risk", ""], ["skinAge", "Estimated Skin Age", "years"],
-  ["skinAgeConfidence", "Skin Age Confidence", ""], ["bmr", "BMR", "kcal/day"], ["tdee", "TDEE", "kcal/day"],
-];
 
 function asPayload(value: Json | null): ReportPayload {
   if (!value || Array.isArray(value) || typeof value !== "object") return {};
   return value as ReportPayload;
 }
 
-function pdfBytes(row: QueueRow): { bytes: Uint8Array; filename: string } {
+async function pdfBytes(row: QueueRow): Promise<{ bytes: Uint8Array; filename: string }> {
+  // Uses the exact same branded template + parameter logic as the on-screen
+  // /results page (report-pdf.ts + build-report-params.ts), so the WhatsApp
+  // PDF always looks identical to what the person saw on their phone —
+  // never the plain fallback layout.
+  const { generateReportPdf } = await import("./report-pdf");
+  const { buildRawParams } = await import("./build-report-params");
+  const { wellnessLabel } = await import("./scan-store");
+
   const payload = asPayload(row.report_payload);
   const details = payload.details ?? {};
-  const results = payload.results ?? {};
-  const answers = payload.answers ?? {};
-  const doc = new jsPDF({ unit: "pt", format: "a4" });
-  const width = doc.internal.pageSize.getWidth();
-  const height = doc.internal.pageSize.getHeight();
-  const margin = 42;
-  let y = 52;
+  const results = (payload.results ?? {}) as Record<string, number | string>;
+  const age = typeof details.age === "number" ? details.age : 30;
 
-  const pageHeader = () => {
-    doc.setFillColor(20, 126, 126);
-    doc.rect(0, 0, width, 12, "F");
-    doc.setTextColor(20, 38, 52);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(22);
-    doc.text("AI Face Scan Wellness Report", margin, 52);
-    y = 78;
-  };
-  const ensure = (needed: number) => {
-    if (y + needed <= height - 48) return;
-    doc.addPage();
-    pageHeader();
-  };
-  const line = (label: string, value: unknown) => {
-    if (value === undefined || value === null || value === "") return;
-    ensure(22);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(90, 103, 116);
-    doc.text(label, margin, y);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(20, 38, 52);
-    doc.text(String(value), width - margin, y, { align: "right" });
-    doc.setDrawColor(226, 232, 240);
-    doc.line(margin, y + 7, width - margin, y + 7);
-    y += 22;
-  };
-  const section = (title: string) => {
-    ensure(34);
-    y += 8;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.setTextColor(20, 126, 126);
-    doc.text(title, margin, y);
-    y += 20;
-  };
+  const fullResults = results as unknown as Parameters<typeof buildRawParams>[0];
+  const rawParams = buildRawParams(fullResults, age);
+  const pdfParams = rawParams.map(({ id: _id, ...rest }) => rest);
+  const score = typeof results.wellnessScore === "number" ? results.wellnessScore : 0;
 
-  pageHeader();
-  line("Name", details.name ?? row.name ?? "Participant");
-  line("Doctor", details.doctorName);
-  line("Employee", details.employeeName);
-  line("Age / Sex", [details.age, details.sex].filter(Boolean).join(" / "));
-  line("Height / Weight", details.heightCm && details.weightKg ? `${details.heightCm} cm / ${details.weightKg} kg` : undefined);
-  section("Wellness Parameters");
-  for (const [key, label, unit] of RESULT_LABELS) {
-    const value = results[key];
-    line(label, value === undefined || value === null ? undefined : `${String(value)}${unit ? ` ${unit}` : ""}`);
-  }
-  section("Lifestyle Responses");
-  line("Exercise", answers.exercise);
-  line("Family History", answers.familyHistory);
-  line("Fried Food", answers.friedFood);
-  line("Sleep", answers.sleep);
-  ensure(85);
-  y += 10;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(20, 38, 52);
-  doc.text("Disclaimer", margin, y);
-  y += 16;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(90, 103, 116);
-  const disclaimer = "This report is an indicative wellness tool, not a medical diagnosis. Values are AI-derived estimates and should not replace consultation with a qualified healthcare professional.";
-  doc.text(doc.splitTextToSize(disclaimer, width - margin * 2), margin, y);
+  const userDetails = {
+    name: details.name ?? row.name ?? "Participant",
+    email: details.email ?? "",
+    countryCode: details.countryCode ?? row.country_code ?? "",
+    mobile: details.mobile ?? row.mobile ?? "",
+    heightCm: details.heightCm ?? 0,
+    weightKg: details.weightKg ?? 0,
+    waistIn: details.waistIn ?? 0,
+    age,
+    sex: (details.sex as "M" | "F" | "") ?? "",
+    doctorName: details.doctorName,
+    employeeName: details.employeeName,
+  } as unknown as Parameters<typeof generateReportPdf>[0];
 
+  const out = await generateReportPdf(userDetails, fullResults, pdfParams, wellnessLabel(score), { returnBlob: true });
+  if (!out) throw new Error("PDF generation returned nothing");
+
+  const arrayBuf = await out.blob.arrayBuffer();
   const safeName = (details.name ?? row.name ?? "user").replace(/[^A-Za-z0-9_-]+/g, "_").slice(0, 40);
   return {
-    bytes: new Uint8Array(doc.output("arraybuffer")),
-    filename: `VitalScan-Report-${safeName}.pdf`,
+    bytes: new Uint8Array(arrayBuf),
+    filename: out.filename || `VitalScan-Report-${safeName}.pdf`,
   };
 }
 
@@ -169,24 +110,28 @@ async function finish(
   if (rpcError) console.error(`[whatsapp] could not finalize ${row.scan_id}: ${rpcError.message}`);
 }
 
-async function deliver(admin: AdminClient, row: QueueRow): Promise<boolean> {
+/**
+ * Uploads already-made PDF bytes, sends via Interakt, and finalizes the
+ * queue row. This is the "cheap" half — no PDF drawing/font-loading here,
+ * so it costs almost nothing regardless of whether the bytes came from
+ * the person's own phone (fast path) or were generated on the server
+ * (fallback path below).
+ */
+async function deliverBytes(
+  admin: AdminClient,
+  row: QueueRow,
+  bytes: Uint8Array,
+  filename: string,
+): Promise<boolean> {
   const apiKey = process.env.INTERAKT_API_KEY;
   if (!apiKey) {
     await finish(admin, row, false, undefined, "INTERAKT_API_KEY is not configured");
     return false;
   }
 
-  let generated: ReturnType<typeof pdfBytes>;
-  try {
-    generated = pdfBytes(row);
-  } catch (error) {
-    await finish(admin, row, false, undefined, `pdf_failed: ${String(error)}`);
-    return false;
-  }
-
   const safeName = (row.name ?? "user").replace(/[^A-Za-z0-9_-]+/g, "_").slice(0, 40);
   const path = `${new Date().toISOString().slice(0, 10)}/${safeName}-${row.scan_id}.pdf`;
-  const { error: uploadError } = await admin.storage.from(BUCKET).upload(path, generated.bytes, {
+  const { error: uploadError } = await admin.storage.from(BUCKET).upload(path, bytes, {
     contentType: "application/pdf",
     upsert: true,
   });
@@ -218,7 +163,7 @@ async function deliver(admin: AdminClient, row: QueueRow): Promise<boolean> {
           name: "face_scan",
           languageCode: "en",
           headerValues: [signed.signedUrl],
-          fileName: generated.filename,
+          fileName: filename,
           bodyValues: [firstName],
         },
       }),
@@ -243,6 +188,23 @@ async function deliver(admin: AdminClient, row: QueueRow): Promise<boolean> {
   }
 }
 
+/**
+ * Fallback path (run by the scheduled cron worker only): generates the
+ * branded PDF on the server from the stored payload — the expensive part
+ * — then hands off to the shared cheap upload/send logic above. This only
+ * runs for scans the person's own phone didn't manage to send itself.
+ */
+async function deliver(admin: AdminClient, row: QueueRow): Promise<boolean> {
+  let generated: Awaited<ReturnType<typeof pdfBytes>>;
+  try {
+    generated = await pdfBytes(row);
+  } catch (error) {
+    await finish(admin, row, false, undefined, `pdf_failed: ${String(error)}`);
+    return false;
+  }
+  return deliverBytes(admin, row, generated.bytes, generated.filename);
+}
+
 export async function processReportQueue(limit = 5): Promise<{ claimed: number; sent: number }> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const admin = supabaseAdmin as unknown as AdminClient;
@@ -251,4 +213,29 @@ export async function processReportQueue(limit = 5): Promise<{ claimed: number; 
   const rows = Array.isArray(data) ? data as QueueRow[] : [];
   const outcomes = await Promise.all(rows.map((row) => deliver(admin, row)));
   return { claimed: rows.length, sent: outcomes.filter(Boolean).length };
+}
+
+/**
+ * The "phone tries first" fast path. The phone has ALREADY generated the
+ * branded PDF itself (using its own CPU, for free) and just needs this
+ * server call to: claim the queue row, upload the phone's PDF, and send
+ * it via Interakt. No PDF drawing happens here — that's the whole point.
+ * If this never gets called (browser closed too early) or fails, the
+ * row is simply left claimed-then-failed (or still pending), and the
+ * scheduled worker's `deliver()` above generates the PDF server-side as
+ * the fallback ~75 seconds later — that's the only path that costs real
+ * server compute, and only for the exceptions.
+ */
+export async function processScanNow(
+  scanId: string,
+  pdfBytes: Uint8Array,
+  filename: string,
+): Promise<boolean> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const admin = supabaseAdmin as unknown as AdminClient;
+  const { data, error } = await admin.rpc("claim_report_job_for_scan", { p_scan_id: scanId });
+  if (error) throw new Error(`Claim failed: ${error.message}`);
+  const rows = Array.isArray(data) ? data as QueueRow[] : [];
+  if (rows.length === 0) return false; // already sent, or already being handled elsewhere
+  return deliverBytes(admin, rows[0], pdfBytes, filename);
 }
