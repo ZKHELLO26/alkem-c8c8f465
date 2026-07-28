@@ -281,7 +281,19 @@ function ResultsPage() {
     import("../lib/telemetry-submit").then((m) => m.submitScanTelemetry()).catch(() => {});
     // Give telemetry a moment to land the new row, then enable trends.
     const t = setTimeout(() => setShowTrends(true), 1800);
-    return () => clearTimeout(t);
+    // The phone tries to generate + send its own WhatsApp report first
+    // (free — uses this device's CPU, not the server's). A short delay
+    // gives the scan a moment to finish saving, so the database's own
+    // safety-net queue row already exists by the time this runs. Entirely
+    // silent — no on-screen indicator, and if it doesn't succeed, the
+    // server-side fallback quietly finishes the job about a minute later.
+    const waTimer = setTimeout(() => {
+      import("../lib/send-whatsapp").then((m) => m.tryDeliverReportFromThisDevice(d, r)).catch(() => {});
+    }, 1200);
+    return () => {
+      clearTimeout(t);
+      clearTimeout(waTimer);
+    };
   }, [navigate]);
 
   const params = useMemo(() => (results ? buildParams(results, age) : []), [results, age]);
