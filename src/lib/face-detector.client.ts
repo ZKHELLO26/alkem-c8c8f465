@@ -43,11 +43,20 @@ function calcEAR(lm: { x: number; y: number }[], aspect = 1): number {
   // aspect = videoWidth / videoHeight. MediaPipe returns coords normalized
   // independently by width (x) and height (y), so on a non-square frame the
   // vertical eye opening is scaled differently from the horizontal one. We
-  // convert y into x-equivalent units (multiply by aspect) so the ratio is
-  // geometrically correct — otherwise EAR is distorted identically for every
-  // person, crushing the inter-person variance the mood scores rely on.
+  // convert y into x-equivalent units (divide by aspect, i.e. multiply by
+  // height/width) so the ratio is geometrically correct — otherwise EAR is
+  // distorted identically for every person, crushing the inter-person
+  // variance the mood scores rely on.
+  //
+  // BUG FIX: this previously multiplied by `aspect` (width/height) instead
+  // of dividing by it. For portrait video (the overwhelming majority of
+  // real scans — width < height, so aspect < 1), that shrank the vertical
+  // eye-opening distance instead of correctly enlarging it, silently
+  // deflating EAR for every portrait scan. A genuinely wide-open, healthy
+  // eye computed to ~0.14 (below the "tired" threshold of 0.17), pinning
+  // Alertness to its floor of 4% regardless of the real eye state.
   const d = (a: { x: number; y: number }, b: { x: number; y: number }) =>
-    Math.hypot(a.x - b.x, (a.y - b.y) * aspect);
+    Math.hypot(a.x - b.x, (a.y - b.y) / aspect);
   // Right eye
   const rVert1 = d(lm[159], lm[145]);
   const rVert2 = d(lm[158], lm[153]);
