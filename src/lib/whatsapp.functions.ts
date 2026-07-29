@@ -3,7 +3,7 @@ import { z } from "zod";
 
 export const processQueuedWhatsappReports = createServerFn({ method: "POST" }).handler(async () => {
   const { processReportQueue } = await import("./whatsapp-worker");
-  return processReportQueue(5);
+  return processReportQueue(30);
 });
 
 const ScanReportSchema = z.object({
