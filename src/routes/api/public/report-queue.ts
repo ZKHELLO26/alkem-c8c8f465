@@ -15,7 +15,7 @@ export const Route = createFileRoute("/api/public/report-queue")({
         }
         const { processReportQueue } = await import("@/lib/whatsapp-worker");
         try {
-          const result = await processReportQueue(10);
+          const result = await processReportQueue(30);
           return Response.json({ ok: true, ...result });
         } catch (error) {
           console.error("[whatsapp] scheduled queue run failed", error);
