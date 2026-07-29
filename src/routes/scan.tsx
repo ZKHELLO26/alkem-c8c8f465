@@ -313,10 +313,6 @@ function ScanPage() {
   }, []);
 
   // Camera
-  const trackRef = useRef<MediaStreamTrack | null>(null);
-  const [zoomCaps, setZoomCaps] = useState<{ min: number; max: number; step: number } | null>(null);
-  const [zoom, setZoom] = useState(1);
-
   useEffect(() => {
     let stream: MediaStream | null = null;
     let cancelled = false;
@@ -326,11 +322,9 @@ function ScanPage() {
           setCamError("Camera not supported on this device.");
           return;
         }
-        // Ask for a bigger native image from the back camera — this gives
-        // real extra pixels on a farther-away face to zoom into, instead
-        // of just stretching a low-res crop (which would hurt accuracy).
-        // The front camera keeps a modest size since it's normally used
-        // close-up (a selfie-style scan) and doesn't need it.
+        // Ask for a bigger native image from the back camera — more real
+        // pixels on a farther-away face, for better accuracy. The front
+        // camera keeps a modest size (normal close-up selfie-style scan).
         const wantsHighRes = facingMode === "environment";
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
@@ -348,20 +342,6 @@ function ScanPage() {
           videoRef.current.srcObject = stream;
           await videoRef.current.play().catch(() => {});
         }
-
-        // Real camera zoom (uses the phone's own lens/sensor zoom, not a
-        // CSS crop) — only available on some Android/Chrome devices.
-        // Detected gracefully; the slider simply doesn't appear if the
-        // device/browser doesn't support it (notably most iPhones today).
-        const track = stream.getVideoTracks()[0];
-        trackRef.current = track ?? null;
-        const caps = track?.getCapabilities?.() as (MediaTrackCapabilities & { zoom?: { min: number; max: number; step: number } }) | undefined;
-        if (caps?.zoom && caps.zoom.max > caps.zoom.min) {
-          setZoomCaps({ min: caps.zoom.min, max: caps.zoom.max, step: caps.zoom.step || 0.1 });
-          setZoom(caps.zoom.min);
-        } else {
-          setZoomCaps(null);
-        }
       } catch {
         setCamError(
           "Camera permission denied. Please allow access and refresh.",
@@ -373,13 +353,6 @@ function ScanPage() {
       stream?.getTracks().forEach((t) => t.stop());
     };
   }, [facingMode]);
-
-  const applyZoom = (value: number) => {
-    setZoom(value);
-    const track = trackRef.current;
-    if (!track) return;
-    track.applyConstraints({ advanced: [{ zoom: value } as unknown as MediaTrackConstraintSet] }).catch(() => {});
-  };
 
   // rPPG signal quality check
   const checkRppgQuality = useCallback(
@@ -1193,41 +1166,24 @@ function ScanPage() {
                   ref={meshCanvasRef}
                   className={`absolute inset-0 h-full w-full object-cover pointer-events-none mix-blend-screen transition-transform duration-300 ${facingMode === "user" ? "scale-x-[-1]" : ""}`}
                 />
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFacingMode((m) => (m === "user" ? "environment" : "user"))
-                  }
-                  aria-label="Switch camera"
-                  className="absolute top-3 right-3 z-10 h-10 w-10 rounded-full bg-black/55 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/70 active:scale-95 transition"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
-                    <path d="M20 8h-3l-2-2H9L7 8H4a1 1 0 00-1 1v10a1 1 0 001 1h16a1 1 0 001-1V9a1 1 0 00-1-1z" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M9 14a3 3 0 003 3m3-3a3 3 0 01-3 3m0-6l2-2m-2 2l-2-2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
-
-                {zoomCaps && (
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 rounded-full bg-black/55 backdrop-blur-md px-4 py-2">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 text-white shrink-0">
-                      <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6" strokeLinecap="round"/>
-                    </svg>
-                    <input
-                      type="range"
-                      min={zoomCaps.min}
-                      max={zoomCaps.max}
-                      step={zoomCaps.step}
-                      value={zoom}
-                      onChange={(e) => applyZoom(Number(e.target.value))}
-                      aria-label="Camera zoom"
-                      className="w-28 accent-white"
-                    />
-                    <span className="text-white text-xs font-medium w-8 text-right tabular-nums">
-                      {zoom.toFixed(1)}×
-                    </span>
-                  </div>
-                )}
               </div>
+
+              {/* Placed OUTSIDE the circular, overflow-hidden video mask
+                  (on the square outer wrapper instead) so the button sits
+                  fully above/clear of the circle and is never clipped. */}
+              <button
+                type="button"
+                onClick={() =>
+                  setFacingMode((m) => (m === "user" ? "environment" : "user"))
+                }
+                aria-label="Switch camera"
+                className="absolute -top-2 -right-2 z-20 h-11 w-11 rounded-full bg-black/70 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/85 active:scale-95 transition shadow-lg"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+                  <path d="M20 8h-3l-2-2H9L7 8H4a1 1 0 00-1 1v10a1 1 0 001 1h16a1 1 0 001-1V9a1 1 0 00-1-1z" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M9 14a3 3 0 003 3m3-3a3 3 0 01-3 3m0-6l2-2m-2 2l-2-2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
 
               {/* Intro prompts */}
               {faceHeld && !blinkDetected && (
