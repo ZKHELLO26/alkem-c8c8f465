@@ -62,10 +62,13 @@ function range(min: number, max: number, step = 1) {
   return out;
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) {
   return (
     <label className="block">
-      <span className="text-sm uppercase tracking-wider text-muted-foreground font-medium">{label}</span>
+      <span className="text-sm uppercase tracking-wider text-muted-foreground font-medium">
+        {label}
+        {required && <span className="text-red-500 ml-0.5">*</span>}
+      </span>
       <div className="mt-1.5">{children}</div>
     </label>
   );
@@ -237,9 +240,11 @@ function DetailsPage() {
       return "Please select the doctor from your list or use ‘Add doctor manually’.";
     if (docManualOn && !docManualName.trim())
       return "Please enter the doctor's name.";
-    if (!d.name.trim()) return "Please enter your name.";
-    if (d.mobile.length !== 10)
-      return "Please enter a valid 10-digit mobile number.";
+    // Name and mobile are optional now — but if a mobile number IS
+    // entered, it must still be a real 10-digit number (no half-typed
+    // garbage), so the WhatsApp report doesn't silently fail to send.
+    if (d.mobile.trim() && d.mobile.length !== 10)
+      return "Please enter a valid 10-digit mobile number, or leave it blank.";
     if (!d.heightCm || !d.weightKg || !d.waistIn || !d.age)
       return "Please select your height, weight, waist and age.";
     if (d.sex !== "M" && d.sex !== "F") return "Please select your gender.";
@@ -309,7 +314,7 @@ function DetailsPage() {
             </div>
           )}
           {show("employee", !link) && (
-          <Field label="Employee Code">
+          <Field label="Employee Code" required>
             <input
               className={inputCls}
               value={empCode}
@@ -372,7 +377,7 @@ function DetailsPage() {
           )}
 
           {empStatus === "ok" && emp && (
-            <Field label="Doctor">
+            <Field label="Doctor" required>
               <div className="relative" ref={docBoxRef}>
                 <input
                   className={inputCls + (doc ? " pr-10 border-[var(--teal)]/40" : "")}
@@ -477,8 +482,7 @@ function DetailsPage() {
               className={inputCls}
               value={d.name}
               onChange={(e) => setD({ ...d, name: e.target.value })}
-              placeholder={emp ? "Patient's name" : "Your name"}
-              required
+              placeholder={emp ? "Patient's name (optional)" : "Your name (optional)"}
             />
           </Field>
 
@@ -505,11 +509,10 @@ function DetailsPage() {
                 type="tel"
                 inputMode="numeric"
                 maxLength={10}
-                required
                 className={inputCls + " flex-1 min-w-0 text-base tracking-wide"}
                 value={d.mobile}
                 onChange={(e) => setD({ ...d, mobile: e.target.value.replace(/\D/g, "").slice(0, 10) })}
-                placeholder="10-digit number"
+                placeholder="10-digit number (optional)"
               />
             </div>
           </Field>
@@ -517,7 +520,7 @@ function DetailsPage() {
 
 
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Height">
+            <Field label="Height" required>
               <select
                 className={inputCls}
                 value={d.heightCm}
@@ -532,7 +535,7 @@ function DetailsPage() {
                 ))}
               </select>
             </Field>
-            <Field label="Weight">
+            <Field label="Weight" required>
               <select
                 className={inputCls}
                 value={d.weightKg}
@@ -545,7 +548,7 @@ function DetailsPage() {
                 ))}
               </select>
             </Field>
-            <Field label="Waist">
+            <Field label="Waist" required>
               <select
                 className={inputCls}
                 value={d.waistIn}
@@ -558,7 +561,7 @@ function DetailsPage() {
                 ))}
               </select>
             </Field>
-            <Field label="Age">
+            <Field label="Age" required>
               <input
                 type="number"
                 inputMode="numeric"
@@ -573,7 +576,7 @@ function DetailsPage() {
             </Field>
           </div>
 
-          <Field label="Gender">
+          <Field label="Gender" required>
             <div className="grid grid-cols-2 gap-2">
               {(["M", "F"] as const).map((s) => (
                 <button
