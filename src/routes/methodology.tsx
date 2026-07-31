@@ -292,7 +292,7 @@ function MethodologyPage() {
           </section>
         ))}
 
-        <p className="mt-14 text-center text-sm text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+        <p className="mt-14 text-center text-[9px] sm:text-[10px] text-muted-foreground max-w-2xl mx-auto leading-relaxed">
           <span className="font-semibold text-foreground">
             Indicative wellness tool — not a medical diagnosis.
           </span>{" "}
