@@ -115,7 +115,7 @@ async function finish(
 }
 
 /**
- * Uploads already-made PDF bytes, sends via Interakt, and finalizes the
+ * Uploads already-made PDF bytes, sends via AiSensy, and finalizes the
  * queue row. This is the "cheap" half — no PDF drawing/font-loading here,
  * so it costs almost nothing regardless of whether the bytes came from
  * the person's own phone (fast path) or were generated on the server
@@ -220,7 +220,7 @@ export async function processReportQueue(limit = 5): Promise<{ claimed: number; 
  * The "phone tries first" fast path. The phone has ALREADY generated the
  * branded PDF itself (using its own CPU, for free) and just needs this
  * server call to: claim the queue row, upload the phone's PDF, and send
- * it via Interakt. No PDF drawing happens here — that's the whole point.
+ * it via AiSensy. No PDF drawing happens here — that's the whole point.
  * If this never gets called (browser closed too early) or fails, the
  * row is simply left claimed-then-failed (or still pending), and the
  * scheduled worker's `deliver()` above generates the PDF server-side as
