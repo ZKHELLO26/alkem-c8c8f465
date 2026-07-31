@@ -113,7 +113,7 @@ export async function generateMethodologyPdf(
 
   const addFooter = () => {
     horizontalGradient(M, H - 38, W - M * 2, 1.2, [BRAND.teal, BRAND.mint, BRAND.azure]);
-    setF("normal", 9);
+    setF("normal", 6); // reduced 35% from 9pt per client request (Aug 1 launch)
     setText(BRAND.inkSoft);
     doc.text("Indicative wellness tool — not a medical diagnosis.", W / 2, H - 24, { align: "center" });
   };
