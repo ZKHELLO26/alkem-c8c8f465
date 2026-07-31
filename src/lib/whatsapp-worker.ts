@@ -115,7 +115,7 @@ async function finish(
 }
 
 /**
- * Uploads already-made PDF bytes, sends via AiSensy, and finalizes the
+ * Uploads already-made PDF bytes, sends via Interakt, and finalizes the
  * queue row. This is the "cheap" half — no PDF drawing/font-loading here,
  * so it costs almost nothing regardless of whether the bytes came from
  * the person's own phone (fast path) or were generated on the server
@@ -127,9 +127,11 @@ async function deliverBytes(
   bytes: Uint8Array,
   filename: string,
 ): Promise<boolean> {
+  // AiSensy (replaces Interakt as of Aug 1 launch).
   const apiKey = process.env.AISENSY_API_KEY;
-  if (!apiKey) {
-    await finish(admin, row, false, undefined, "AISENSY_API_KEY is not configured");
+  const campaignName = process.env.AISENSY_CAMPAIGN_NAME;
+  if (!apiKey || !campaignName) {
+    await finish(admin, row, false, undefined, "AISENSY_API_KEY or AISENSY_CAMPAIGN_NAME is not configured");
     return false;
   }
 
@@ -150,22 +152,28 @@ async function deliverBytes(
     return false;
   }
 
-  const digits = (row.country_code ?? "+91").replace(/\D/g, "") || "91";
-  const destination = `${digits}${(row.mobile ?? "").replace(/\D/g, "")}`;
+  // AiSensy wants the full number (country code + number) with NO "+".
+  const countryDigits = (row.country_code ?? "+91").replace(/\D/g, "") || "91";
+  const localDigits = (row.mobile ?? "").replace(/\D/g, "");
+  const destination = `${countryDigits}${localDigits}`;
   const firstName = (row.name ?? "there").trim().split(/\s+/)[0] || "there";
+
   try {
     const response = await fetch("https://backend.aisensy.com/campaign/t1/api/v2", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         apiKey,
-        campaignName: process.env.AISENSY_CAMPAIGN_NAME || "wellness_report",
+        campaignName,
         destination,
-        userName: row.name ?? "Participant",
+        userName: row.name ?? "there",
+        source: "face-scan-report",
+        media: { url: signed.signedUrl, filename },
+        // Matches what the "face_scan" template expects: {{1}} = first name.
+        // If the AiSensy template has a different number/order of variables,
+        // this array needs to match it exactly, in order.
         templateParams: [firstName],
-        source: "face-scan",
-        media: { url: signed.signedUrl, filename: filename },
-        tags: ["face_scan"],
+        tags: ["face_scan_report"],
         attributes: { scan_id: row.scan_id },
       }),
     });
@@ -176,8 +184,8 @@ async function deliverBytes(
     }
     let providerMessageId: string | undefined;
     try {
-      const parsed = JSON.parse(responseText) as { id?: string; messageId?: string; submitted_message_id?: string };
-      providerMessageId = parsed.id ?? parsed.messageId ?? parsed.submitted_message_id;
+      const parsed = JSON.parse(responseText) as { id?: string; messageId?: string };
+      providerMessageId = parsed.id ?? parsed.messageId;
     } catch {
       providerMessageId = undefined;
     }
@@ -220,7 +228,7 @@ export async function processReportQueue(limit = 5): Promise<{ claimed: number; 
  * The "phone tries first" fast path. The phone has ALREADY generated the
  * branded PDF itself (using its own CPU, for free) and just needs this
  * server call to: claim the queue row, upload the phone's PDF, and send
- * it via AiSensy. No PDF drawing happens here — that's the whole point.
+ * it via Interakt. No PDF drawing happens here — that's the whole point.
  * If this never gets called (browser closed too early) or fails, the
  * row is simply left claimed-then-failed (or still pending), and the
  * scheduled worker's `deliver()` above generates the PDF server-side as
