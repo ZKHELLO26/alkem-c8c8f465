@@ -209,7 +209,7 @@ function Card({ p }: { p: Param }) {
       {open && (
         <div className="mt-4 pt-4 border-t animate-fade-up ml-[3.25rem] space-y-2">
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">{p.explain}</p>
-          <p className="text-xs sm:text-sm font-semibold text-[var(--teal)] leading-relaxed">
+          <p className="text-[8px] sm:text-[9px] font-semibold text-[var(--teal)] leading-relaxed">
             Wellness indicator only — not a medical diagnosis.
           </p>
         </div>
