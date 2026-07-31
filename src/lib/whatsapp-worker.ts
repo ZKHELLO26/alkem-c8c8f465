@@ -115,7 +115,7 @@ async function finish(
 }
 
 /**
- * Uploads already-made PDF bytes, sends via Interakt, and finalizes the
+ * Uploads already-made PDF bytes, sends via AiSensy, and finalizes the
  * queue row. This is the "cheap" half — no PDF drawing/font-loading here,
  * so it costs almost nothing regardless of whether the bytes came from
  * the person's own phone (fast path) or were generated on the server
@@ -127,9 +127,9 @@ async function deliverBytes(
   bytes: Uint8Array,
   filename: string,
 ): Promise<boolean> {
-  const apiKey = process.env.INTERAKT_API_KEY;
+  const apiKey = process.env.AISENSY_API_KEY;
   if (!apiKey) {
-    await finish(admin, row, false, undefined, "INTERAKT_API_KEY is not configured");
+    await finish(admin, row, false, undefined, "AISENSY_API_KEY is not configured");
     return false;
   }
 
@@ -150,37 +150,34 @@ async function deliverBytes(
     return false;
   }
 
-  const countryCode = (row.country_code ?? "+91").startsWith("+")
-    ? row.country_code ?? "+91"
-    : `+${(row.country_code ?? "91").replace(/\D/g, "")}`;
+  const digits = (row.country_code ?? "+91").replace(/\D/g, "") || "91";
+  const destination = `${digits}${(row.mobile ?? "").replace(/\D/g, "")}`;
   const firstName = (row.name ?? "there").trim().split(/\s+/)[0] || "there";
   try {
-    const response = await fetch("https://api.interakt.ai/v1/public/message/", {
+    const response = await fetch("https://backend.aisensy.com/campaign/t1/api/v2", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Basic ${apiKey}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        countryCode,
-        phoneNumber: (row.mobile ?? "").replace(/\D/g, ""),
-        callbackData: `face_scan_report:${row.scan_id}`,
-        type: "Template",
-        template: {
-          name: "face_scan",
-          languageCode: "en",
-          headerValues: [signed.signedUrl],
-          fileName: filename,
-          bodyValues: [firstName],
-        },
+        apiKey,
+        campaignName: "wellness_report",
+        destination,
+        userName: row.name ?? "Participant",
+        templateParams: [firstName],
+        source: "face-scan",
+        media: { url: signed.signedUrl, filename: filename },
+        tags: ["face_scan"],
+        attributes: { scan_id: row.scan_id },
       }),
     });
     const responseText = await response.text();
     if (!response.ok) {
-      await finish(admin, row, false, path, `interakt_${response.status}: ${responseText.slice(0, 500)}`);
+      await finish(admin, row, false, path, `aisensy_${response.status}: ${responseText.slice(0, 500)}`);
       return false;
     }
     let providerMessageId: string | undefined;
     try {
-      const parsed = JSON.parse(responseText) as { id?: string; result?: { id?: string } };
-      providerMessageId = parsed.id ?? parsed.result?.id;
+      const parsed = JSON.parse(responseText) as { id?: string; messageId?: string; submitted_message_id?: string };
+      providerMessageId = parsed.id ?? parsed.messageId ?? parsed.submitted_message_id;
     } catch {
       providerMessageId = undefined;
     }
@@ -223,7 +220,7 @@ export async function processReportQueue(limit = 5): Promise<{ claimed: number; 
  * The "phone tries first" fast path. The phone has ALREADY generated the
  * branded PDF itself (using its own CPU, for free) and just needs this
  * server call to: claim the queue row, upload the phone's PDF, and send
- * it via Interakt. No PDF drawing happens here — that's the whole point.
+ * it via AiSensy. No PDF drawing happens here — that's the whole point.
  * If this never gets called (browser closed too early) or fails, the
  * row is simply left claimed-then-failed (or still pending), and the
  * scheduled worker's `deliver()` above generates the PDF server-side as
