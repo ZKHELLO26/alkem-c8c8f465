@@ -1,7 +1,6 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import appCss from "../styles.css?url";
 import { AmbientBackground } from "../components/AmbientBackground";
-import { Footer } from "../components/Footer";
 
 function NotFoundComponent() {
   return (
@@ -67,7 +66,6 @@ function RootComponent() {
     <>
       <AmbientBackground />
       <Outlet />
-      <Footer />
     </>
   );
 }
