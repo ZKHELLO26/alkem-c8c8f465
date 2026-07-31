@@ -196,7 +196,7 @@ export async function generateReportPdf(
 
   const addFooter = () => {
     horizontalGradient(M, H - 38, W - M * 2, 1.2, [BRAND.teal, BRAND.mint, BRAND.azure]);
-    setF("normal", 9);
+    setF("normal", 6); // reduced 35% from 9pt per client request (Aug 1 launch)
     setText(BRAND.inkSoft);
     doc.text(DISCLAIMER_SHORT, W / 2, H - 24, { align: "center" });
   };
@@ -545,11 +545,16 @@ export async function generateReportPdf(
   }
 
   // ────────── Final prominent disclaimer block (dynamic height) ──────────
-  setF("normal", 11.5);
+  // Font sizes reduced 35% per client request ahead of the Aug 1 launch
+  // (11.5pt → 7.5pt body, 16pt → 10.5pt heading). Box height is computed
+  // from the font size automatically, so it shrinks to match.
+  const discBodySize = 7.5;
+  const discHeadingSize = 10.5;
+  setF("normal", discBodySize);
   const discInnerW = cardW - 52 - 18;
   const dLines = doc.splitTextToSize(DISCLAIMER_FULL, discInnerW);
-  const lineH = 11.5 * 1.45;
-  const boxH = 36 + dLines.length * lineH + 22;
+  const lineH = discBodySize * 1.45;
+  const boxH = 30 + dLines.length * lineH + 16;
   ensureSpace(boxH + 24);
   y += 8;
   glowRect(cardX, y, cardW, boxH, 12, BRAND.gold);
@@ -558,12 +563,12 @@ export async function generateReportPdf(
   doc.setLineWidth(1);
   doc.roundedRect(cardX, y, cardW, boxH, 12, 12, "FD");
   roundedGradient(cardX, y, cardW, 4, 12, [BRAND.gold, tint(BRAND.gold, 0.4)]);
-  setF("bold", 16);
+  setF("bold", discHeadingSize);
   setText(BRAND.gold);
-  doc.text("DISCLAIMER", cardX + 22, y + 30);
-  setF("normal", 11.5);
+  doc.text("DISCLAIMER", cardX + 22, y + 22);
+  setF("normal", discBodySize);
   setText(BRAND.ink);
-  doc.text(dLines, cardX + 22, y + 50, { lineHeightFactor: 1.45 });
+  doc.text(dLines, cardX + 22, y + 38, { lineHeightFactor: 1.45 });
   y += boxH + 12;
 
 
