@@ -159,7 +159,7 @@ async function deliverBytes(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         apiKey,
-        campaignName: "wellness_report",
+        campaignName: process.env.AISENSY_CAMPAIGN_NAME || "wellness_report",
         destination,
         userName: row.name ?? "Participant",
         templateParams: [firstName],
