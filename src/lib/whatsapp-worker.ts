@@ -176,7 +176,9 @@ async function deliverBytes(
               .replace(/\{\{\s*name\s*\}\}/gi, row.name ?? "there"),
           ),
       ]
-    : [[firstName], [], [firstName, firstName], [firstName, firstName, firstName]];
+    : // The approved "wellness_report" template reads:
+      //   "Hello {{1}}, Your {{2}} report is ready." -> 2 variables.
+      [[firstName, "Face Scan"], [firstName], [], [firstName, firstName, firstName]];
 
   let lastStatus = 0;
   let lastBody = "";
