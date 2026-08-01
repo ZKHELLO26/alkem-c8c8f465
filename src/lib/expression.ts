@@ -90,15 +90,12 @@ export function sampleExpression(
     Math.abs(lm[LM.leftEyeOuter].x - lm[LM.leftEyeInner].x) +
       Math.abs(lm[LM.rightEyeOuter].x - lm[LM.rightEyeInner].x),
   );
-  // eye-to-brow gap is a vertical (y) measure while eyeWidth is horizontal (x);
-  // convert y to x-equivalent units via aspect so the ratio is geometrically
-  // correct and actually differs person-to-person.
-  //
-  // BUG FIX: same inversion as calcEAR above — this multiplied by `aspect`
-  // instead of dividing by it, silently deflating the brow-gap measurement
-  // for every portrait scan and pushing Calmness toward its floor for most
-  // people regardless of their real expression.
-  const brow = ((eyeInnerY - browY) / aspect) / eyeWidth; // higher = relaxed
+  // eye-to-brow gap is a vertical (y) measure while eyeWidth is horizontal (x).
+  // Same fix as calcEAR: the video element's reported aspect is the camera's
+  // SENSOR orientation and is often the wrong way round on phones, so we
+  // calibrate off the face box instead (see yScaleFromFace).
+  const brow = ((eyeInnerY - browY) * yScaleFromFace(lm)) / eyeWidth; // higher = relaxed
+
 
   // Yaw proxy: nose-x vs face midline.
   const midX = (lm[LM.leftEyeOuter].x + lm[LM.rightEyeOuter].x) / 2;
