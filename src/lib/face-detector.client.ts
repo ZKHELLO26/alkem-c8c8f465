@@ -39,24 +39,50 @@ function dist(a: { x: number; y: number }, b: { x: number; y: number }) {
  *   Right eye: top 159, bottom 145, inner 133, outer 33
  *   Left eye:  top 386, bottom 374, inner 362, outer 263
  */
-function calcEAR(lm: { x: number; y: number }[], aspect = 1): number {
-  // aspect = videoWidth / videoHeight. MediaPipe returns coords normalized
-  // independently by width (x) and height (y), so on a non-square frame the
-  // vertical eye opening is scaled differently from the horizontal one. We
-  // convert y into x-equivalent units (divide by aspect, i.e. multiply by
-  // height/width) so the ratio is geometrically correct — otherwise EAR is
-  // distorted identically for every person, crushing the inter-person
-  // variance the mood scores rely on.
-  //
-  // BUG FIX: this previously multiplied by `aspect` (width/height) instead
-  // of dividing by it. For portrait video (the overwhelming majority of
-  // real scans — width < height, so aspect < 1), that shrank the vertical
-  // eye-opening distance instead of correctly enlarging it, silently
-  // deflating EAR for every portrait scan. A genuinely wide-open, healthy
-  // eye computed to ~0.14 (below the "tired" threshold of 0.17), pinning
-  // Alertness to its floor of 4% regardless of the real eye state.
+/** A real human face's landmark box is reliably ~1.45x taller than wide. */
+const FACE_H_OVER_W = 1.45;
+
+/**
+ * Converts a y-distance (normalized by frame HEIGHT) into the same units as
+ * an x-distance (normalized by frame WIDTH), without needing to know the
+ * frame's real aspect ratio.
+ *
+ * Why not use video.videoWidth/videoHeight: on phones the camera reports its
+ * SENSOR orientation (typically 640x480 landscape) even when the person is
+ * holding the phone upright, so that number is frequently the wrong way round.
+ * Feeding it in shrank the vertical eye opening instead of enlarging it, so a
+ * wide-open eye computed to ~0.14 — under the 0.17 "tired" floor — which is
+ * why Alertness kept reading 4 for everybody.
+ *
+ * Instead we calibrate off the face itself: since every face has roughly the
+ * same real-world height:width ratio, the landmark box gives us the frame's
+ * effective scale directly.
+ */
+function yScaleFromFace(lm: { x: number; y: number }[]): number {
+  let minX = 1, maxX = 0, minY = 1, maxY = 0;
+  for (const p of lm) {
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.y > maxY) maxY = p.y;
+  }
+  const fw = Math.max(1e-4, maxX - minX);
+  const fh = Math.max(1e-4, maxY - minY);
+  // clamped so a bad/partial detection can never blow up the score
+  return Math.max(0.4, Math.min(3.5, FACE_H_OVER_W * (fw / fh)));
+}
+
+/**
+ * Eye Aspect Ratio — ratio of vertical to horizontal eye opening.
+ * Below ~0.21 → eye closed (blink).
+ * MediaPipe eye landmark indices:
+ *   Right eye: top 159, bottom 145, inner 133, outer 33
+ *   Left eye:  top 386, bottom 374, inner 362, outer 263
+ */
+function calcEAR(lm: { x: number; y: number }[]): number {
+  const sy = yScaleFromFace(lm);
   const d = (a: { x: number; y: number }, b: { x: number; y: number }) =>
-    Math.hypot(a.x - b.x, (a.y - b.y) / aspect);
+    Math.hypot(a.x - b.x, (a.y - b.y) * sy);
   // Right eye
   const rVert1 = d(lm[159], lm[145]);
   const rVert2 = d(lm[158], lm[153]);
@@ -71,6 +97,9 @@ function calcEAR(lm: { x: number; y: number }[], aspect = 1): number {
 
   return (rEar + lEar) / 2;
 }
+
+export { yScaleFromFace };
+
 
 export async function initFaceDetector(): Promise<boolean> {
   if (landmarker) return true;
@@ -140,11 +169,8 @@ export function detectFace(
       if (p.y > maxY) maxY = p.y;
     }
 
-    const aspect =
-      video.videoWidth && video.videoHeight
-        ? video.videoWidth / video.videoHeight
-        : 1;
-    const ear = calcEAR(lm, aspect);
+    const ear = calcEAR(lm);
+
 
     return {
       found: true,
