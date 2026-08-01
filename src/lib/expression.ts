@@ -49,12 +49,34 @@ const LM = {
   noseTip: 1,
 };
 
+/**
+ * A real human face's landmark box is reliably ~1.45x taller than wide, which
+ * lets us convert y-distances (normalized by frame height) into x-equivalent
+ * units without trusting the camera's reported orientation.
+ */
+const FACE_H_OVER_W = 1.45;
+
+function yScaleFromFace(lm: { x: number; y: number }[]): number {
+  let minX = 1, maxX = 0, minY = 1, maxY = 0;
+  for (const p of lm) {
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.y > maxY) maxY = p.y;
+  }
+  const fw = Math.max(1e-4, maxX - minX);
+  const fh = Math.max(1e-4, maxY - minY);
+  return Math.max(0.4, Math.min(3.5, FACE_H_OVER_W * (fw / fh)));
+}
+
 /** Build a single per-frame expression sample from MP landmarks + EAR. */
 export function sampleExpression(
   lm: { x: number; y: number; z?: number }[],
   ear: number,
-  aspect = 1,
+  _aspect = 1, // kept for call-site compatibility; no longer trusted (see above)
 ): ExpressionSample | null {
+  void _aspect;
+
   const need = [
     LM.mouthLeft,
     LM.mouthRight,
