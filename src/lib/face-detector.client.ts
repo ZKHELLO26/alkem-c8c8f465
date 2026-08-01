@@ -169,11 +169,8 @@ export function detectFace(
       if (p.y > maxY) maxY = p.y;
     }
 
-    const aspect =
-      video.videoWidth && video.videoHeight
-        ? video.videoWidth / video.videoHeight
-        : 1;
-    const ear = calcEAR(lm, aspect);
+    const ear = calcEAR(lm);
+
 
     return {
       found: true,
