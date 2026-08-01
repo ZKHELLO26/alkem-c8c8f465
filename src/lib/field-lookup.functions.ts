@@ -16,6 +16,9 @@ export type EmployeeLookup = {
   region: string | null;
   orgCode: string | null;
   isManager?: boolean;
+  managerCode?: string | null;
+  managerName?: string | null;
+  managerDesignation?: string | null;
 };
 
 export type DoctorOption = {
