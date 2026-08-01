@@ -158,44 +158,75 @@ async function deliverBytes(
   const destination = `${countryDigits}${localDigits}`;
   const firstName = (row.name ?? "there").trim().split(/\s+/)[0] || "there";
 
+  // AiSensy rejects a send with "Template params does not match the campaign"
+  // when the number of {{n}} variables we send differs from the approved
+  // template. The exact count differs per template, so:
+  //  1. If AISENSY_TEMPLATE_PARAMS is set (comma-separated, supports the
+  //     placeholders {{name}} and {{first_name}}), use exactly that.
+  //  2. Otherwise try the plausible shapes in order until one is accepted.
+  const configured = process.env.AISENSY_TEMPLATE_PARAMS;
+  const candidates: string[][] = configured
+    ? [
+        configured
+          .split(",")
+          .map((p) =>
+            p
+              .trim()
+              .replace(/\{\{\s*first_name\s*\}\}/gi, firstName)
+              .replace(/\{\{\s*name\s*\}\}/gi, row.name ?? "there"),
+          ),
+      ]
+    : [[firstName], [], [firstName, firstName], [firstName, firstName, firstName]];
+
+  let lastStatus = 0;
+  let lastBody = "";
+
   try {
-    const response = await fetch("https://backend.aisensy.com/campaign/t1/api/v2", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        apiKey,
-        campaignName,
-        destination,
-        userName: row.name ?? "there",
-        source: "face-scan-report",
-        media: { url: signed.signedUrl, filename },
-        // Matches what the "face_scan" template expects: {{1}} = first name.
-        // If the AiSensy template has a different number/order of variables,
-        // this array needs to match it exactly, in order.
-        templateParams: [firstName],
-        tags: ["face_scan_report"],
-        attributes: { scan_id: row.scan_id },
-      }),
-    });
-    const responseText = await response.text();
-    if (!response.ok) {
-      await finish(admin, row, false, path, `aisensy_${response.status}: ${responseText.slice(0, 500)}`);
-      return false;
+    for (const templateParams of candidates) {
+      const response = await fetch("https://backend.aisensy.com/campaign/t1/api/v2", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          apiKey,
+          campaignName,
+          destination,
+          userName: row.name ?? "there",
+          source: "face-scan-report",
+          media: { url: signed.signedUrl, filename },
+          templateParams,
+          tags: ["face_scan_report"],
+          attributes: { scan_id: row.scan_id },
+        }),
+      });
+      const responseText = await response.text();
+      if (!response.ok) {
+        lastStatus = response.status;
+        lastBody = responseText;
+        // Only a param-count mismatch is worth retrying with another shape.
+        if (/template params/i.test(responseText)) continue;
+        break;
+      }
+      let providerMessageId: string | undefined;
+      try {
+        const parsed = JSON.parse(responseText) as { id?: string; messageId?: string };
+        providerMessageId = parsed.id ?? parsed.messageId;
+      } catch {
+        providerMessageId = undefined;
+      }
+      console.log(
+        `[whatsapp] aisensy accepted ${row.scan_id} with ${templateParams.length} template param(s)`,
+      );
+      await finish(admin, row, true, path, undefined, providerMessageId);
+      return true;
     }
-    let providerMessageId: string | undefined;
-    try {
-      const parsed = JSON.parse(responseText) as { id?: string; messageId?: string };
-      providerMessageId = parsed.id ?? parsed.messageId;
-    } catch {
-      providerMessageId = undefined;
-    }
-    await finish(admin, row, true, path, undefined, providerMessageId);
-    return true;
+    await finish(admin, row, false, path, `aisensy_${lastStatus}: ${lastBody.slice(0, 500)}`);
+    return false;
   } catch (error) {
     await finish(admin, row, false, path, `network: ${String(error)}`);
     return false;
   }
 }
+
 
 /**
  * Fallback path (run by the scheduled cron worker only): generates the
