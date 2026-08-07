@@ -349,6 +349,10 @@ export type Database = {
           attempts: number
           country_code: string | null
           created_at: string
+          delivery_status: string | null
+          delivery_detail: string | null
+          delivery_updated_at: string | null
+          raw_webhook_payload: Json | null
           id: string
           last_error: string | null
           mobile: string | null
@@ -367,6 +371,10 @@ export type Database = {
           attempts?: number
           country_code?: string | null
           created_at?: string
+          delivery_status?: string | null
+          delivery_detail?: string | null
+          delivery_updated_at?: string | null
+          raw_webhook_payload?: Json | null
           id?: string
           last_error?: string | null
           mobile?: string | null
@@ -385,6 +393,10 @@ export type Database = {
           attempts?: number
           country_code?: string | null
           created_at?: string
+          delivery_status?: string | null
+          delivery_detail?: string | null
+          delivery_updated_at?: string | null
+          raw_webhook_payload?: Json | null
           id?: string
           last_error?: string | null
           mobile?: string | null
