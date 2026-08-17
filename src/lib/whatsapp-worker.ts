@@ -2,6 +2,10 @@ import type { Json } from "@/integrations/supabase/types";
 
 const BUCKET = "whatsapp-reports";
 const SIGNED_URL_TTL_SEC = 60 * 60 * 24;
+// The app's own public address, used to build a link that NEVER expires
+// itself (see /api/public/report-link/$scanId) — this is what actually
+// gets sent in the WhatsApp message now, instead of a raw signed URL.
+const APP_BASE_URL = process.env.APP_BASE_URL || "https://facescan.ap.zeikonglobal.com";
 
 type ReportDetails = {
   name?: string;
@@ -151,6 +155,12 @@ async function deliverBytes(
     await finish(admin, row, false, path, `sign_failed: ${signedError?.message ?? "unknown"}`);
     return false;
   }
+  // THE FIX for "InvalidJWT / exp claim" errors people saw days after
+  // receiving their report: don't send the raw signed URL above (it dies
+  // after SIGNED_URL_TTL_SEC, no matter how long that's set to). Send a
+  // link to our own stable redirect endpoint instead — it never expires
+  // itself, because every click mints a brand-new signed URL right then.
+  const stableReportUrl = `${APP_BASE_URL}/api/public/report-link/${row.scan_id}`;
 
   // AiSensy wants the full number (country code + number) with NO "+".
   const countryDigits = (row.country_code ?? "+91").replace(/\D/g, "") || "91";
@@ -194,7 +204,7 @@ async function deliverBytes(
           destination,
           userName: row.name ?? "there",
           source: "face-scan-report",
-          media: { url: signed.signedUrl, filename },
+          media: { url: stableReportUrl, filename },
           templateParams,
           tags: ["face_scan_report"],
           attributes: { scan_id: row.scan_id },
