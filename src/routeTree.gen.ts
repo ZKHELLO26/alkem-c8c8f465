@@ -19,6 +19,8 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as ApiPublicReportQueueRouteImport } from './routes/api/public/report-queue'
+import { Route as ApiPublicAisensyWebhookRouteImport } from './routes/api/public/aisensy-webhook'
+import { Route as ApiPublicReportLinkScanIdRouteImport } from './routes/api/public/report-link.$scanId'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -70,6 +72,17 @@ const ApiPublicReportQueueRoute = ApiPublicReportQueueRouteImport.update({
   path: '/api/public/report-queue',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAisensyWebhookRoute = ApiPublicAisensyWebhookRouteImport.update({
+  id: '/api/public/aisensy-webhook',
+  path: '/api/public/aisensy-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicReportLinkScanIdRoute =
+  ApiPublicReportLinkScanIdRouteImport.update({
+    id: '/api/public/report-link/$scanId',
+    path: '/api/public/report-link/$scanId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -81,7 +94,9 @@ export interface FileRoutesByFullPath {
   '/scan': typeof ScanRoute
   '/terms': typeof TermsRoute
   '/s/$token': typeof STokenRoute
+  '/api/public/aisensy-webhook': typeof ApiPublicAisensyWebhookRoute
   '/api/public/report-queue': typeof ApiPublicReportQueueRoute
+  '/api/public/report-link/$scanId': typeof ApiPublicReportLinkScanIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -93,7 +108,9 @@ export interface FileRoutesByTo {
   '/scan': typeof ScanRoute
   '/terms': typeof TermsRoute
   '/s/$token': typeof STokenRoute
+  '/api/public/aisensy-webhook': typeof ApiPublicAisensyWebhookRoute
   '/api/public/report-queue': typeof ApiPublicReportQueueRoute
+  '/api/public/report-link/$scanId': typeof ApiPublicReportLinkScanIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -106,7 +123,9 @@ export interface FileRoutesById {
   '/scan': typeof ScanRoute
   '/terms': typeof TermsRoute
   '/s/$token': typeof STokenRoute
+  '/api/public/aisensy-webhook': typeof ApiPublicAisensyWebhookRoute
   '/api/public/report-queue': typeof ApiPublicReportQueueRoute
+  '/api/public/report-link/$scanId': typeof ApiPublicReportLinkScanIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -120,7 +139,9 @@ export interface FileRouteTypes {
     | '/scan'
     | '/terms'
     | '/s/$token'
+    | '/api/public/aisensy-webhook'
     | '/api/public/report-queue'
+    | '/api/public/report-link/$scanId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -132,7 +153,9 @@ export interface FileRouteTypes {
     | '/scan'
     | '/terms'
     | '/s/$token'
+    | '/api/public/aisensy-webhook'
     | '/api/public/report-queue'
+    | '/api/public/report-link/$scanId'
   id:
     | '__root__'
     | '/'
@@ -144,7 +167,9 @@ export interface FileRouteTypes {
     | '/scan'
     | '/terms'
     | '/s/$token'
+    | '/api/public/aisensy-webhook'
     | '/api/public/report-queue'
+    | '/api/public/report-link/$scanId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -157,7 +182,9 @@ export interface RootRouteChildren {
   ScanRoute: typeof ScanRoute
   TermsRoute: typeof TermsRoute
   STokenRoute: typeof STokenRoute
+  ApiPublicAisensyWebhookRoute: typeof ApiPublicAisensyWebhookRoute
   ApiPublicReportQueueRoute: typeof ApiPublicReportQueueRoute
+  ApiPublicReportLinkScanIdRoute: typeof ApiPublicReportLinkScanIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -232,6 +259,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicReportQueueRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/aisensy-webhook': {
+      id: '/api/public/aisensy-webhook'
+      path: '/api/public/aisensy-webhook'
+      fullPath: '/api/public/aisensy-webhook'
+      preLoaderRoute: typeof ApiPublicAisensyWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/report-link/$scanId': {
+      id: '/api/public/report-link/$scanId'
+      path: '/api/public/report-link/$scanId'
+      fullPath: '/api/public/report-link/$scanId'
+      preLoaderRoute: typeof ApiPublicReportLinkScanIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -245,8 +286,19 @@ const rootRouteChildren: RootRouteChildren = {
   ScanRoute: ScanRoute,
   TermsRoute: TermsRoute,
   STokenRoute: STokenRoute,
+  ApiPublicAisensyWebhookRoute: ApiPublicAisensyWebhookRoute,
   ApiPublicReportQueueRoute: ApiPublicReportQueueRoute,
+  ApiPublicReportLinkScanIdRoute: ApiPublicReportLinkScanIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
