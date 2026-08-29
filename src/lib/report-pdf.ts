@@ -129,7 +129,7 @@ export async function generateReportPdf(
   const { default: jsPDF } = await import("jspdf");
 
   const fonts = await loadPoppins().catch(() => null);
-  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const doc = new jsPDF({ unit: "pt", format: "a4", compress: true });
   if (fonts) {
     registerPoppins(doc, fonts);
     doc.setFont("Poppins", "normal");
