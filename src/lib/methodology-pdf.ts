@@ -67,7 +67,7 @@ export async function generateMethodologyPdf(
 ) {
   const { default: jsPDF } = await import("jspdf");
   const fonts = await loadPoppins().catch(() => null);
-  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const doc = new jsPDF({ unit: "pt", format: "a4", compress: true });
   if (fonts) {
     doc.addFileToVFS("Poppins-Regular.ttf", fonts.regular);
     doc.addFont("Poppins-Regular.ttf", "Poppins", "normal");
