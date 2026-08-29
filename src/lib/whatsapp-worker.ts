@@ -27,7 +27,7 @@ type ReportPayload = {
   answers?: Record<string, unknown>;
 };
 
-type QueueRow = {
+export type QueueRow = {
   id: string;
   scan_id: string;
   name: string | null;
@@ -52,7 +52,7 @@ function asPayload(value: Json | null): ReportPayload {
   return value as ReportPayload;
 }
 
-async function pdfBytes(row: QueueRow): Promise<{ bytes: Uint8Array; filename: string }> {
+export async function pdfBytes(row: QueueRow): Promise<{ bytes: Uint8Array; filename: string }> {
   // Uses the exact same branded template + parameter logic as the on-screen
   // /results page (report-pdf.ts + build-report-params.ts), so the WhatsApp
   // PDF always looks identical to what the person saw on their phone —
