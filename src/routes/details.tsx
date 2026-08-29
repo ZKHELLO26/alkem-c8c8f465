@@ -236,7 +236,7 @@ function DetailsPage() {
       return "Employee code not found. Please check the code or use ‘Enter manually’.";
     if (empManualOn && !empManualName.trim())
       return "Please enter the employee / doctor name for manual entry.";
-    if (empStatus === "ok" && !doc && !docManualOn)
+    if ((empStatus === "ok" || empManualOn) && !doc && !docManualOn)
       return "Please select the doctor from your list or use ‘Add doctor manually’.";
     if (docManualOn && !docManualName.trim())
       return "Please enter the doctor's name.";
@@ -376,7 +376,7 @@ function DetailsPage() {
           </Field>
           )}
 
-          {empStatus === "ok" && emp && (
+          {((empStatus === "ok" && emp) || empManualOn) && (
             <Field label="Doctor" required>
               <div className="relative" ref={docBoxRef}>
                 <input
@@ -390,7 +390,7 @@ function DetailsPage() {
                   onFocus={() => {
                     if (!doc && !docManualOn) setDocOpen(true);
                   }}
-                  placeholder={emp.isManager ? "Search by name, code, city, speciality…" : "Type doctor name…"}
+                  placeholder={emp?.isManager ? "Search by name, code, city, speciality…" : "Type doctor name…"}
                   autoComplete="off"
                   disabled={docManualOn}
                 />
@@ -411,7 +411,7 @@ function DetailsPage() {
                     )}
                     {!docLoading && docOptions.length === 0 && (
                       <div className="px-4 py-3 text-sm text-gray-500">
-                        No matching doctor in {emp.isManager ? "the organization" : "your list"}.
+                        No matching doctor in {emp?.isManager ? "the organization" : "your list"}.
                       </div>
                     )}
                     {!docLoading &&
