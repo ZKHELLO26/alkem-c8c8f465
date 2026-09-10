@@ -19,6 +19,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as ApiPublicReportQueueRouteImport } from './routes/api/public/report-queue'
+import { Route as ApiPublicPurgeOldReportsRouteImport } from './routes/api/public/purge-old-reports'
 import { Route as ApiPublicAisensyWebhookRouteImport } from './routes/api/public/aisensy-webhook'
 import { Route as ApiPublicReportLinkScanIdRouteImport } from './routes/api/public/report-link.$scanId'
 
@@ -72,6 +73,12 @@ const ApiPublicReportQueueRoute = ApiPublicReportQueueRouteImport.update({
   path: '/api/public/report-queue',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPurgeOldReportsRoute =
+  ApiPublicPurgeOldReportsRouteImport.update({
+    id: '/api/public/purge-old-reports',
+    path: '/api/public/purge-old-reports',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicAisensyWebhookRoute = ApiPublicAisensyWebhookRouteImport.update({
   id: '/api/public/aisensy-webhook',
   path: '/api/public/aisensy-webhook',
@@ -95,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/s/$token': typeof STokenRoute
   '/api/public/aisensy-webhook': typeof ApiPublicAisensyWebhookRoute
+  '/api/public/purge-old-reports': typeof ApiPublicPurgeOldReportsRoute
   '/api/public/report-queue': typeof ApiPublicReportQueueRoute
   '/api/public/report-link/$scanId': typeof ApiPublicReportLinkScanIdRoute
 }
@@ -109,6 +117,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/s/$token': typeof STokenRoute
   '/api/public/aisensy-webhook': typeof ApiPublicAisensyWebhookRoute
+  '/api/public/purge-old-reports': typeof ApiPublicPurgeOldReportsRoute
   '/api/public/report-queue': typeof ApiPublicReportQueueRoute
   '/api/public/report-link/$scanId': typeof ApiPublicReportLinkScanIdRoute
 }
@@ -124,6 +133,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/s/$token': typeof STokenRoute
   '/api/public/aisensy-webhook': typeof ApiPublicAisensyWebhookRoute
+  '/api/public/purge-old-reports': typeof ApiPublicPurgeOldReportsRoute
   '/api/public/report-queue': typeof ApiPublicReportQueueRoute
   '/api/public/report-link/$scanId': typeof ApiPublicReportLinkScanIdRoute
 }
@@ -140,6 +150,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/s/$token'
     | '/api/public/aisensy-webhook'
+    | '/api/public/purge-old-reports'
     | '/api/public/report-queue'
     | '/api/public/report-link/$scanId'
   fileRoutesByTo: FileRoutesByTo
@@ -154,6 +165,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/s/$token'
     | '/api/public/aisensy-webhook'
+    | '/api/public/purge-old-reports'
     | '/api/public/report-queue'
     | '/api/public/report-link/$scanId'
   id:
@@ -168,6 +180,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/s/$token'
     | '/api/public/aisensy-webhook'
+    | '/api/public/purge-old-reports'
     | '/api/public/report-queue'
     | '/api/public/report-link/$scanId'
   fileRoutesById: FileRoutesById
@@ -183,6 +196,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   STokenRoute: typeof STokenRoute
   ApiPublicAisensyWebhookRoute: typeof ApiPublicAisensyWebhookRoute
+  ApiPublicPurgeOldReportsRoute: typeof ApiPublicPurgeOldReportsRoute
   ApiPublicReportQueueRoute: typeof ApiPublicReportQueueRoute
   ApiPublicReportLinkScanIdRoute: typeof ApiPublicReportLinkScanIdRoute
 }
@@ -259,6 +273,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicReportQueueRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/purge-old-reports': {
+      id: '/api/public/purge-old-reports'
+      path: '/api/public/purge-old-reports'
+      fullPath: '/api/public/purge-old-reports'
+      preLoaderRoute: typeof ApiPublicPurgeOldReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/aisensy-webhook': {
       id: '/api/public/aisensy-webhook'
       path: '/api/public/aisensy-webhook'
@@ -287,6 +308,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   STokenRoute: STokenRoute,
   ApiPublicAisensyWebhookRoute: ApiPublicAisensyWebhookRoute,
+  ApiPublicPurgeOldReportsRoute: ApiPublicPurgeOldReportsRoute,
   ApiPublicReportQueueRoute: ApiPublicReportQueueRoute,
   ApiPublicReportLinkScanIdRoute: ApiPublicReportLinkScanIdRoute,
 }
