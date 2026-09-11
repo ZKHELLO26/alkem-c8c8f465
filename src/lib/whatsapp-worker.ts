@@ -52,58 +52,14 @@ function asPayload(value: Json | null): ReportPayload {
 }
 
 /**
- * THE ACTUAL FIX: this used to unconditionally import Face Scan's own
- * report-pdf.ts/build-report-params.ts, regardless of which product's scan
- * it was actually processing — so a hair or skin scan landing here got
- * built as a Face Scan report from face-scan-shaped code fed hair/skin
- * data, which is exactly what produced "Cannot read properties of
- * undefined (reading 'text')". Now branches on the scanType that was
- * already being saved into report_payload.details, just never read.
+ * Builds the Face Scan report PDF for a queued job.
  */
 export async function pdfBytes(row: QueueRow): Promise<{ bytes: Uint8Array; filename: string }> {
   const payload = asPayload(row.report_payload);
   const details = payload.details ?? {};
   const results = (payload.results ?? {}) as Record<string, unknown>;
-  const scanType = details.scanType;
 
-  if (scanType === "hair") {
-    // Hair Scan's own PDF builder — already fully server-safe (no canvas/
-    // DOM dependency), built specifically so it can run in exactly this
-    // kind of server context. Uses the profile fields actually available
-    // on the queue row/payload; anything not carried this far (employee/
-    // doctor specifics beyond name) simply isn't part of the PDF anyway.
-    const { buildHairPdfBytes } = await import("@/lib/hair-pdf");
-    const profile = {
-      name: details.name ?? row.name ?? "",
-      mobile: details.mobile ?? row.mobile ?? "",
-      countryCode: details.countryCode ?? row.country_code ?? "+91",
-      age: typeof details.age === "number" ? details.age : "",
-      sex: (details.sex as "M" | "F" | "") ?? "",
-      doctorName: details.doctorName,
-    };
-    const bytes = await buildHairPdfBytes(results as never, profile as never);
-    const safeName = (details.name ?? row.name ?? "user").replace(/[^A-Za-z0-9_-]+/g, "_").slice(0, 40);
-    return { bytes, filename: `Hair-Wellness-Report-${safeName}.pdf` };
-  }
 
-  if (scanType === "skin") {
-    // Skin Scan's own PDF builder — same reasoning as hair above.
-    const { buildSkinPdfBytes } = await import("@/lib/pdf");
-    const report = {
-      profile: {
-        name: details.name ?? row.name ?? "",
-        email: details.email ?? "",
-        age: typeof details.age === "number" ? details.age : 0,
-        gender: details.sex === "F" ? "female" : "male",
-        countryCode: details.countryCode ?? row.country_code ?? "+91",
-        mobile: details.mobile ?? row.mobile ?? "",
-      },
-      results,
-    };
-    const bytes = await buildSkinPdfBytes(report as never);
-    const safeName = (details.name ?? row.name ?? "user").replace(/[^A-Za-z0-9_-]+/g, "_").slice(0, 40);
-    return { bytes, filename: `Skin-Wellness-Report-${safeName}.pdf` };
-  }
 
   // Unchanged for everything else (Face Scan, and anything without a
   // recognized scanType) — exactly the original behavior, byte-for-byte.
