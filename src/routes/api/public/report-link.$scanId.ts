@@ -53,7 +53,7 @@ export const Route = createFileRoute("/api/public/report-link/$scanId")({
         if (signed.error || !signed.data?.signedUrl) {
           try {
             const { pdfBytes } = await import("@/lib/whatsapp-worker");
-            const { bytes } = await pdfBytes(row);
+            const { bytes } = await pdfBytes({ id: "", ...row });
             const { error: reuploadError } = await supabaseAdmin.storage
               .from("whatsapp-reports")
               .upload(row.pdf_path, bytes, { contentType: "application/pdf", upsert: true });
