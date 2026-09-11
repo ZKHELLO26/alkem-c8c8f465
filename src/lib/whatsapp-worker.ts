@@ -2,9 +2,6 @@ import type { Json } from "@/integrations/supabase/types";
 
 const BUCKET = "whatsapp-reports";
 const SIGNED_URL_TTL_SEC = 60 * 60 * 24;
-// The app's own public address, used to build a link that NEVER expires
-// itself (see /api/public/report-link/$scanId) — this is what actually
-// gets sent in the WhatsApp message now, instead of a raw signed URL.
 const APP_BASE_URL = process.env.APP_BASE_URL || "https://facescan.ap.zeikonglobal.com";
 
 type ReportDetails = {
@@ -19,6 +16,9 @@ type ReportDetails = {
   waistIn?: number;
   doctorName?: string;
   employeeName?: string;
+  // Already present in every row the trigger writes (enqueue_scan_report
+  // includes 'scanType', NEW.scan_type) — this fix just starts reading it.
+  scanType?: string;
 };
 
 type ReportPayload = {
@@ -46,34 +46,82 @@ type AdminClient = {
   };
 };
 
-
 function asPayload(value: Json | null): ReportPayload {
   if (!value || Array.isArray(value) || typeof value !== "object") return {};
   return value as ReportPayload;
 }
 
+/**
+ * THE ACTUAL FIX: this used to unconditionally import Face Scan's own
+ * report-pdf.ts/build-report-params.ts, regardless of which product's scan
+ * it was actually processing — so a hair or skin scan landing here got
+ * built as a Face Scan report from face-scan-shaped code fed hair/skin
+ * data, which is exactly what produced "Cannot read properties of
+ * undefined (reading 'text')". Now branches on the scanType that was
+ * already being saved into report_payload.details, just never read.
+ */
 export async function pdfBytes(row: QueueRow): Promise<{ bytes: Uint8Array; filename: string }> {
-  // Uses the exact same branded template + parameter logic as the on-screen
-  // /results page (report-pdf.ts + build-report-params.ts), so the WhatsApp
-  // PDF always looks identical to what the person saw on their phone —
-  // never the plain fallback layout.
+  const payload = asPayload(row.report_payload);
+  const details = payload.details ?? {};
+  const results = (payload.results ?? {}) as Record<string, unknown>;
+  const scanType = details.scanType;
+
+  if (scanType === "hair") {
+    // Hair Scan's own PDF builder — already fully server-safe (no canvas/
+    // DOM dependency), built specifically so it can run in exactly this
+    // kind of server context. Uses the profile fields actually available
+    // on the queue row/payload; anything not carried this far (employee/
+    // doctor specifics beyond name) simply isn't part of the PDF anyway.
+    const { buildHairPdfBytes } = await import("@/lib/hair-pdf");
+    const profile = {
+      name: details.name ?? row.name ?? "",
+      mobile: details.mobile ?? row.mobile ?? "",
+      countryCode: details.countryCode ?? row.country_code ?? "+91",
+      age: typeof details.age === "number" ? details.age : "",
+      sex: (details.sex as "M" | "F" | "") ?? "",
+      doctorName: details.doctorName,
+    };
+    const bytes = await buildHairPdfBytes(results as never, profile as never);
+    const safeName = (details.name ?? row.name ?? "user").replace(/[^A-Za-z0-9_-]+/g, "_").slice(0, 40);
+    return { bytes, filename: `Hair-Wellness-Report-${safeName}.pdf` };
+  }
+
+  if (scanType === "skin") {
+    // Skin Scan's own PDF builder — same reasoning as hair above.
+    const { buildSkinPdfBytes } = await import("@/lib/pdf");
+    const report = {
+      profile: {
+        name: details.name ?? row.name ?? "",
+        email: details.email ?? "",
+        age: typeof details.age === "number" ? details.age : 0,
+        gender: details.sex === "F" ? "female" : "male",
+        countryCode: details.countryCode ?? row.country_code ?? "+91",
+        mobile: details.mobile ?? row.mobile ?? "",
+      },
+      results,
+    };
+    const bytes = await buildSkinPdfBytes(report as never);
+    const safeName = (details.name ?? row.name ?? "user").replace(/[^A-Za-z0-9_-]+/g, "_").slice(0, 40);
+    return { bytes, filename: `Skin-Wellness-Report-${safeName}.pdf` };
+  }
+
+  // Unchanged for everything else (Face Scan, and anything without a
+  // recognized scanType) — exactly the original behavior, byte-for-byte.
   const { generateReportPdf } = await import("./report-pdf");
   const { buildRawParams } = await import("./build-report-params");
   const { wellnessLabel } = await import("./scan-store");
 
-  const payload = asPayload(row.report_payload);
-  const details = payload.details ?? {};
-  const results = (payload.results ?? {}) as Record<string, number | string>;
+  const faceResults = results as Record<string, number | string>;
   const age = typeof details.age === "number" ? details.age : 30;
 
-  const fullResults = results as unknown as Parameters<typeof buildRawParams>[0];
+  const fullResults = faceResults as unknown as Parameters<typeof buildRawParams>[0];
   const rawParams = buildRawParams(fullResults, age);
   const pdfParams = rawParams.map((p) => {
     const { id: _id, ...rest } = p;
     void _id;
     return rest;
   });
-  const score = typeof results.wellnessScore === "number" ? results.wellnessScore : 0;
+  const score = typeof faceResults.wellnessScore === "number" ? faceResults.wellnessScore : 0;
 
   const userDetails = {
     name: details.name ?? row.name ?? "Participant",
@@ -118,20 +166,12 @@ async function finish(
   if (rpcError) console.error(`[whatsapp] could not finalize ${row.scan_id}: ${rpcError.message}`);
 }
 
-/**
- * Uploads already-made PDF bytes, sends via Interakt, and finalizes the
- * queue row. This is the "cheap" half — no PDF drawing/font-loading here,
- * so it costs almost nothing regardless of whether the bytes came from
- * the person's own phone (fast path) or were generated on the server
- * (fallback path below).
- */
 async function deliverBytes(
   admin: AdminClient,
   row: QueueRow,
   bytes: Uint8Array,
   filename: string,
 ): Promise<boolean> {
-  // AiSensy (replaces Interakt as of Aug 1 launch).
   const apiKey = process.env.AISENSY_API_KEY;
   const campaignName = process.env.AISENSY_CAMPAIGN_NAME;
   if (!apiKey || !campaignName) {
@@ -155,25 +195,13 @@ async function deliverBytes(
     await finish(admin, row, false, path, `sign_failed: ${signedError?.message ?? "unknown"}`);
     return false;
   }
-  // THE FIX for "InvalidJWT / exp claim" errors people saw days after
-  // receiving their report: don't send the raw signed URL above (it dies
-  // after SIGNED_URL_TTL_SEC, no matter how long that's set to). Send a
-  // link to our own stable redirect endpoint instead — it never expires
-  // itself, because every click mints a brand-new signed URL right then.
   const stableReportUrl = `${APP_BASE_URL}/api/public/report-link/${row.scan_id}`;
 
-  // AiSensy wants the full number (country code + number) with NO "+".
   const countryDigits = (row.country_code ?? "+91").replace(/\D/g, "") || "91";
   const localDigits = (row.mobile ?? "").replace(/\D/g, "");
   const destination = `${countryDigits}${localDigits}`;
   const firstName = (row.name ?? "there").trim().split(/\s+/)[0] || "there";
 
-  // AiSensy rejects a send with "Template params does not match the campaign"
-  // when the number of {{n}} variables we send differs from the approved
-  // template. The exact count differs per template, so:
-  //  1. If AISENSY_TEMPLATE_PARAMS is set (comma-separated, supports the
-  //     placeholders {{name}} and {{first_name}}), use exactly that.
-  //  2. Otherwise try the plausible shapes in order until one is accepted.
   const configured = process.env.AISENSY_TEMPLATE_PARAMS;
   const candidates: string[][] = configured
     ? [
@@ -186,9 +214,7 @@ async function deliverBytes(
               .replace(/\{\{\s*name\s*\}\}/gi, row.name ?? "there"),
           ),
       ]
-    : // The approved "wellness_report" template reads:
-      //   "Hello {{1}}, Your {{2}} report is ready." -> 2 variables.
-      [[firstName, "Face Scan"], [firstName], [], [firstName, firstName, firstName]];
+    : [[firstName, "Face Scan"], [firstName], [], [firstName, firstName, firstName]];
 
   let lastStatus = 0;
   let lastBody = "";
@@ -214,7 +240,6 @@ async function deliverBytes(
       if (!response.ok) {
         lastStatus = response.status;
         lastBody = responseText;
-        // Only a param-count mismatch is worth retrying with another shape.
         if (/template params/i.test(responseText)) continue;
         break;
       }
@@ -225,9 +250,7 @@ async function deliverBytes(
       } catch {
         providerMessageId = undefined;
       }
-      console.log(
-        `[whatsapp] aisensy accepted ${row.scan_id} with ${templateParams.length} template param(s)`,
-      );
+      console.log(`[whatsapp] aisensy accepted ${row.scan_id} with ${templateParams.length} template param(s)`);
       await finish(admin, row, true, path, undefined, providerMessageId);
       return true;
     }
@@ -239,13 +262,6 @@ async function deliverBytes(
   }
 }
 
-
-/**
- * Fallback path (run by the scheduled cron worker only): generates the
- * branded PDF on the server from the stored payload — the expensive part
- * — then hands off to the shared cheap upload/send logic above. This only
- * runs for scans the person's own phone didn't manage to send itself.
- */
 async function deliver(admin: AdminClient, row: QueueRow): Promise<boolean> {
   let generated: Awaited<ReturnType<typeof pdfBytes>>;
   try {
@@ -267,17 +283,6 @@ export async function processReportQueue(limit = 5): Promise<{ claimed: number; 
   return { claimed: rows.length, sent: outcomes.filter(Boolean).length };
 }
 
-/**
- * The "phone tries first" fast path. The phone has ALREADY generated the
- * branded PDF itself (using its own CPU, for free) and just needs this
- * server call to: claim the queue row, upload the phone's PDF, and send
- * it via Interakt. No PDF drawing happens here — that's the whole point.
- * If this never gets called (browser closed too early) or fails, the
- * row is simply left claimed-then-failed (or still pending), and the
- * scheduled worker's `deliver()` above generates the PDF server-side as
- * the fallback ~75 seconds later — that's the only path that costs real
- * server compute, and only for the exceptions.
- */
 export async function processScanNow(
   scanId: string,
   pdfBytes: Uint8Array,
@@ -288,6 +293,6 @@ export async function processScanNow(
   const { data, error } = await admin.rpc("claim_report_job_for_scan", { p_scan_id: scanId });
   if (error) throw new Error(`Claim failed: ${error.message}`);
   const rows = Array.isArray(data) ? data as QueueRow[] : [];
-  if (rows.length === 0) return false; // already sent, or already being handled elsewhere
+  if (rows.length === 0) return false;
   return deliverBytes(admin, rows[0], pdfBytes, filename);
 }
