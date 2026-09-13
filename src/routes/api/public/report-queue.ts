@@ -15,7 +15,11 @@ export const Route = createFileRoute("/api/public/report-queue")({
         }
         const { processReportQueue } = await import("@/lib/whatsapp-worker");
         try {
-          const result = await processReportQueue(30);
+          // 50 matches RAISE_QUEUE_BATCH_CAP.sql's new database-side cap —
+          // previously asked for 30 while the database silently clamped
+          // everything to 20 anyway, so this now actually uses the real
+          // available capacity instead of under-requesting it.
+          const result = await processReportQueue(50);
           return Response.json({ ok: true, ...result });
         } catch (error) {
           console.error("[whatsapp] scheduled queue run failed", error);
